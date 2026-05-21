@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Calculator, Database, ShieldCheck } from "lucide-react";
 import { SiteShell } from "@/components/layout/site-shell";
 import { TokenCostCalculator } from "@/components/calculators/token-cost-calculator";
+import { AdSlot } from "@/components/public/ad-slot";
 import { Card, CardBody, CardHeader } from "@/components/ui/card";
 import {
   getLatestUsdCnyRate,
@@ -180,6 +181,8 @@ export default async function Home() {
                 </Link>
               </CardBody>
             </Card>
+
+            <AdSlot slotKey="home-sidebar" />
           </div>
         </div>
       </div>

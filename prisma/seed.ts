@@ -171,6 +171,48 @@ async function main() {
     }
   }
 
+  await prisma.adPlacement.upsert({
+    where: { slotKey: "home-sidebar" },
+    update: {
+      name: "Home sidebar",
+      pageType: "home",
+      position: "sidebar",
+      provider: "placeholder",
+      adCode: null,
+      isEnabled: false,
+    },
+    create: {
+      slotKey: "home-sidebar",
+      name: "Home sidebar",
+      pageType: "home",
+      position: "sidebar",
+      provider: "placeholder",
+      adCode: null,
+      isEnabled: false,
+    },
+  });
+
+  await prisma.adPlacement.upsert({
+    where: { slotKey: "models-footer" },
+    update: {
+      name: "Models footer",
+      pageType: "models",
+      position: "footer",
+      provider: "placeholder",
+      adCode: null,
+      isEnabled: false,
+    },
+    create: {
+      slotKey: "models-footer",
+      name: "Models footer",
+      pageType: "models",
+      position: "footer",
+      provider: "placeholder",
+      adCode: null,
+      isEnabled: false,
+    },
+  });
+
   const adminEmails = (process.env.ADMIN_EMAILS ?? "")
     .split(",")
     .map((email) => email.trim())

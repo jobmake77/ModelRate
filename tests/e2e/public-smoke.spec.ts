@@ -149,3 +149,15 @@ test("admin dashboard is reachable in local bootstrap mode", async ({
   ).toBeVisible();
   await expect(page.getByRole("link", { name: "Models" })).toBeVisible();
 });
+
+test("admin ad placements page is reachable and disabled by default", async ({
+  page,
+}) => {
+  await page.goto("/admin/ad-placements");
+
+  await expect(
+    page.getByRole("heading", { name: "Ad Placements" }),
+  ).toBeVisible();
+  await expect(page.getByText("Home sidebar")).toBeVisible();
+  await expect(page.getByText("disabled").first()).toBeVisible();
+});

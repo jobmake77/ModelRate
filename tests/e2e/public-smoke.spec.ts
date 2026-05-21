@@ -23,6 +23,17 @@ test("models page displays source and last checked metadata", async ({
   await expect(page.getByText(/Checked/).first()).toBeVisible();
 });
 
+test("model detail links maintained relay pricing", async ({ page }) => {
+  await page.goto("/models/gpt-4o-mini");
+
+  await expect(
+    page.getByRole("heading", { name: "GPT-4o mini" }),
+  ).toBeVisible();
+  await expect(page.getByText("中转站价格和倍率")).toBeVisible();
+  await expect(page.getByRole("link", { name: "OpenRouter" })).toBeVisible();
+  await expect(page.getByText("Referral")).toBeVisible();
+});
+
 test("token cost calculator updates result", async ({ page }) => {
   await page.goto("/tools/token-cost-calculator");
 

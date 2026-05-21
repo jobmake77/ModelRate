@@ -4,6 +4,7 @@ import { SiteShell } from "@/components/layout/site-shell";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardBody, CardHeader } from "@/components/ui/card";
 import { getModelBySlug } from "@/lib/data-access/models";
+import { getCurrentRelayPricesForModel } from "@/lib/data-access/relays";
 import { formatDate, formatNumber, formatUsd } from "@/lib/formatters/number";
 
 type Props = {
@@ -26,7 +27,10 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 export default async function ModelDetailPage({ params }: Props) {
   const { slug } = await params;
-  const model = await getModelBySlug(slug);
+  const [model, relayPrices] = await Promise.all([
+    getModelBySlug(slug),
+    getCurrentRelayPricesForModel(slug),
+  ]);
 
   if (!model) {
     notFound();
@@ -120,6 +124,116 @@ export default async function ModelDetailPage({ params }: Props) {
             </CardBody>
           </Card>
         </div>
+
+        <section className="mt-6 rounded-lg border border-slate-200 bg-white shadow-sm">
+          <div className="border-b border-slate-200 px-5 py-4">
+            <h2 className="font-semibold">中转站价格和倍率</h2>
+            <p className="mt-1 text-sm text-slate-600">
+              当前已维护的中转站价格或倍率。推荐、赞助和风险标签不代表官方背书。
+            </p>
+          </div>
+          {relayPrices.length ? (
+            <div className="overflow-x-auto">
+              <table className="min-w-full divide-y divide-slate-200 text-sm">
+                <thead className="bg-slate-50 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
+                  <tr>
+                    <th className="px-4 py-3">Relay</th>
+                    <th className="px-4 py-3">Route</th>
+                    <th className="px-4 py-3">Multiplier</th>
+                    <th className="px-4 py-3">Direct price</th>
+                    <th className="px-4 py-3">Metadata</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {relayPrices.map((price) => (
+                    <tr
+                      className="align-top"
+                      key={`${price.relaySlug}-${price.routeName ?? "default"}`}
+                    >
+                      <td className="px-4 py-4">
+                        <a
+                          className="font-medium text-slate-950 hover:underline"
+                          href={`/relays/${price.relaySlug}`}
+                        >
+                          {price.relayName}
+                        </a>
+                        <div className="mt-2 flex flex-wrap gap-1">
+                          <Badge tone="amber">
+                            Risk: {price.relayRiskLevel}
+                          </Badge>
+                          {price.relayIsSponsored ? (
+                            <Badge tone="amber">Sponsored</Badge>
+                          ) : null}
+                          {price.relayHasReferralProgram ? (
+                            <Badge tone="blue">Referral</Badge>
+                          ) : null}
+                          {price.relayIsVerified ? (
+                            <Badge tone="green">Verified</Badge>
+                          ) : null}
+                        </div>
+                      </td>
+                      <td className="px-4 py-4">
+                        {price.routeName ?? "default"}
+                      </td>
+                      <td className="px-4 py-4">
+                        <div>
+                          Model:{" "}
+                          {price.modelMultiplier === null
+                            ? "N/A"
+                            : `${price.modelMultiplier}x`}
+                        </div>
+                        <div className="text-slate-500">
+                          Completion:{" "}
+                          {price.completionMultiplier === null
+                            ? "N/A"
+                            : `${price.completionMultiplier}x`}
+                        </div>
+                      </td>
+                      <td className="px-4 py-4">
+                        <div>
+                          In:{" "}
+                          {price.inputPricePer1M === null
+                            ? "N/A"
+                            : `${formatUsd(price.inputPricePer1M)} / 1M`}
+                        </div>
+                        <div className="text-slate-500">
+                          Out:{" "}
+                          {price.outputPricePer1M === null
+                            ? "N/A"
+                            : `${formatUsd(price.outputPricePer1M)} / 1M`}
+                        </div>
+                      </td>
+                      <td className="px-4 py-4">
+                        {price.sourceUrl ? (
+                          <a
+                            className="font-medium text-blue-700 hover:underline"
+                            href={price.sourceUrl}
+                            rel="noreferrer"
+                            target="_blank"
+                          >
+                            Source
+                          </a>
+                        ) : (
+                          <span className="text-slate-500">No source</span>
+                        )}
+                        <div className="mt-1 text-xs text-slate-500">
+                          Checked{" "}
+                          {price.lastCheckedAt
+                            ? formatDate(price.lastCheckedAt)
+                            : "N/A"}
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <div className="p-5 text-sm text-slate-500">
+              暂无已维护的中转站价格或倍率。
+            </div>
+          )}
+        </section>
       </div>
     </SiteShell>
   );

@@ -20,6 +20,14 @@ export type RelayModelPricePublic = RelayModelPriceFixture & {
   modelName: string;
 };
 
+export type ModelRelayPricePublic = RelayModelPriceFixture & {
+  relayName: string;
+  relayRiskLevel: RelayStationFixture["riskLevel"];
+  relayIsSponsored: boolean;
+  relayIsVerified: boolean;
+  relayHasReferralProgram: boolean;
+};
+
 export async function getPublishedRelayStations(): Promise<
   RelayStationPublic[]
 > {
@@ -129,6 +137,60 @@ export async function getCurrentRelayModelPrices(
   }
 }
 
+export async function getCurrentRelayPricesForModel(
+  modelSlug: string,
+): Promise<ModelRelayPricePublic[]> {
+  if (!hasDatabaseUrl) {
+    return getFixtureModelRelayPrices(modelSlug);
+  }
+
+  try {
+    const rows = await getPrisma().relayModelPrice.findMany({
+      where: {
+        isCurrent: true,
+        model: {
+          slug: modelSlug,
+          status: "active",
+        },
+        relayStation: {
+          status: "published",
+        },
+      },
+      include: { relayStation: true },
+      orderBy: [{ relayStation: { name: "asc" } }, { routeName: "asc" }],
+    });
+
+    return rows.map((row) => ({
+      relaySlug: row.relayStation.slug,
+      relayName: row.relayStation.name,
+      relayRiskLevel: row.relayStation.riskLevel,
+      relayIsSponsored: row.relayStation.isSponsored,
+      relayIsVerified: row.relayStation.isVerified,
+      relayHasReferralProgram: row.relayStation.hasReferralProgram,
+      modelSlug,
+      routeName: row.routeName,
+      billingType: row.billingType,
+      modelMultiplier: row.modelMultiplier ? Number(row.modelMultiplier) : null,
+      completionMultiplier: row.completionMultiplier
+        ? Number(row.completionMultiplier)
+        : null,
+      groupMultiplier: Number(row.groupMultiplier),
+      routeMultiplier: Number(row.routeMultiplier),
+      inputPricePer1M: row.inputPricePer1M ? Number(row.inputPricePer1M) : null,
+      outputPricePer1M: row.outputPricePer1M
+        ? Number(row.outputPricePer1M)
+        : null,
+      currency: row.currency,
+      sourceUrl: row.sourceUrl,
+      lastCheckedAt: row.lastCheckedAt?.toISOString() ?? null,
+      isCurrent: row.isCurrent,
+      notes: row.notes,
+    }));
+  } catch {
+    return getFixtureModelRelayPrices(modelSlug);
+  }
+}
+
 export async function getAdminRelayStations(): Promise<AdminRelayRow[]> {
   if (!hasDatabaseUrl) {
     return relayStations.map((relay) => ({
@@ -207,6 +269,31 @@ function getFixtureRelayModelPrices(
       return {
         ...price,
         modelName: model?.displayName ?? price.modelSlug,
+      };
+    });
+}
+
+function getFixtureModelRelayPrices(
+  modelSlug: string,
+): ModelRelayPricePublic[] {
+  return relayModelPrices
+    .filter((price) => price.modelSlug === modelSlug && price.isCurrent)
+    .flatMap((price) => {
+      const relay = relayStations.find(
+        (item) => item.slug === price.relaySlug && item.status === "published",
+      );
+
+      if (!relay) {
+        return [];
+      }
+
+      return {
+        ...price,
+        relayName: relay.name,
+        relayRiskLevel: relay.riskLevel,
+        relayIsSponsored: relay.isSponsored,
+        relayIsVerified: relay.isVerified,
+        relayHasReferralProgram: relay.hasReferralProgram,
       };
     });
 }

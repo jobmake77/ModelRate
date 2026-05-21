@@ -16,6 +16,7 @@ const navItems = [
   { href: "/admin/model-prices", label: "Model Prices" },
   { href: "/admin/relays", label: "Relays" },
   { href: "/admin/relay-prices", label: "Relay Prices" },
+  { href: "/admin/guides", label: "Guides" },
   { href: "/admin/submissions", label: "Submissions" },
   { href: "/admin/ad-placements", label: "Ad Placements" },
   { href: "/relays", label: "Public Relays" },

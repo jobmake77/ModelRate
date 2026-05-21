@@ -187,3 +187,15 @@ test("admin relay prices page is reachable in local bootstrap mode", async ({
   await expect(page.getByText("Create relay model price")).toBeVisible();
   await expect(page.getByText("No relay prices yet.")).toBeVisible();
 });
+
+test("admin guides page is reachable in local bootstrap mode", async ({
+  page,
+}) => {
+  await page.goto("/admin/guides");
+
+  await expect(page.getByRole("heading", { name: "Guides" })).toBeVisible();
+  await expect(page.getByText("Create guide")).toBeVisible();
+  await expect(
+    page.getByText("/guides/how-to-calculate-ai-token-cost"),
+  ).toBeVisible();
+});

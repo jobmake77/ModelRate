@@ -30,8 +30,8 @@ export default async function AdminPage() {
         <Metric label="Role" value={admin.role} />
       </div>
       <div className="mt-6 rounded-lg border border-slate-200 bg-white p-5 text-sm text-slate-600">
-        当前第一批纵切片只开放模型和模型价格管理。中转站、指南和商业化模块将在后续
-        Sprint 接入。
+        当前后台已覆盖模型、模型价格、中转站、中转站价格、指南、投稿审核和广告位配置。
+        生产环境请先配置 Supabase Auth、数据库和管理员账号。
       </div>
     </div>
   );

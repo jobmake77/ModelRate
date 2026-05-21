@@ -5,6 +5,7 @@ import {
   models,
   providers,
 } from "../lib/fixtures/model-data";
+import { guides } from "../lib/fixtures/guide-data";
 import {
   relayModelPrices,
   relayStations,
@@ -256,6 +257,33 @@ async function main() {
       isEnabled: false,
     },
   });
+
+  for (const guide of guides) {
+    await prisma.guide.upsert({
+      where: { slug: guide.slug },
+      update: {
+        title: guide.title,
+        description: guide.description,
+        contentMd: guide.contentMd,
+        category: guide.category,
+        status: "published",
+        seoTitle: guide.seoTitle,
+        seoDescription: guide.seoDescription,
+        publishedAt: new Date(guide.publishedAt),
+      },
+      create: {
+        slug: guide.slug,
+        title: guide.title,
+        description: guide.description,
+        contentMd: guide.contentMd,
+        category: guide.category,
+        status: "published",
+        seoTitle: guide.seoTitle,
+        seoDescription: guide.seoDescription,
+        publishedAt: new Date(guide.publishedAt),
+      },
+    });
+  }
 
   const adminEmails = (process.env.ADMIN_EMAILS ?? "")
     .split(",")

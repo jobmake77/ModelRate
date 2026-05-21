@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { SiteShell } from "@/components/layout/site-shell";
+import { SubmissionForm } from "@/components/public/submission-form";
 
 export const metadata: Metadata = {
   title: "Contact",
@@ -17,13 +18,13 @@ export default function ContactPage() {
         <div className="space-y-4">
           <p>
             ModelRate
-            后续会提供服务商投稿、价格纠错和合作入口。当前阶段可以先通过仓库
-            issue 或项目维护者渠道提交反馈。
+            接收服务商投稿、价格纠错和合作反馈。所有提交都会先进入待审核状态，不会直接修改公开价格或推荐信息。
           </p>
           <p>
             价格纠错请提供模型名称、当前展示价格、正确价格、来源链接和检查时间。
           </p>
         </div>
+        <SubmissionForm />
       </article>
     </SiteShell>
   );

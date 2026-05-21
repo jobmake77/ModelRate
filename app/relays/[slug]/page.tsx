@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { SiteShell } from "@/components/layout/site-shell";
+import { TrackedOutboundLink } from "@/components/public/tracked-outbound-link";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardBody, CardHeader } from "@/components/ui/card";
 import { getRelayStationBySlug } from "@/lib/data-access/relays";
@@ -41,6 +42,15 @@ export default async function RelayStationDetailPage({ params }: Props) {
             {relay.name}
           </h1>
           <p className="mt-3 max-w-3xl text-slate-600">{relay.description}</p>
+          <TrackedOutboundLink
+            className="mt-5 inline-flex rounded-md bg-slate-950 px-4 py-2 text-sm font-medium text-white"
+            sourcePath={`/relays/${relay.slug}`}
+            targetSlug={relay.slug}
+            targetType="relay"
+            url={relay.referralUrl ?? relay.websiteUrl}
+          >
+            访问官网
+          </TrackedOutboundLink>
         </div>
 
         <div className="grid gap-6 lg:grid-cols-[1fr_0.8fr]">

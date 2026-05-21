@@ -86,6 +86,59 @@ test("robots and sitemap expose public URLs and block admin", async ({
   expect(body).toContain("/guides/how-to-calculate-ai-token-cost");
 });
 
+test("contact page exposes submission form and API accepts pending feedback", async ({
+  page,
+  request,
+}) => {
+  await page.goto("/contact");
+
+  await expect(page.getByRole("heading", { name: "Contact" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "提交" })).toBeVisible();
+
+  const response = await request.post("/api/submissions", {
+    data: {
+      type: "price_correction",
+      submitterEmail: "tester@example.com",
+      payload: {
+        subject: "GPT price correction",
+        message: "The displayed price should be checked against source.",
+        sourceUrl: "https://example.com/pricing",
+        modelName: "GPT test",
+        displayedPrice: "$1.00",
+        correctedPrice: "$0.50",
+      },
+    },
+  });
+
+  expect([201, 202]).toContain(response.status());
+  const body = await response.json();
+  expect(body.submission?.status ?? body.status).toBe("pending");
+});
+
+test("outbound click API validates relay targets without open redirect", async ({
+  request,
+}) => {
+  const valid = await request.post("/api/outbound-clicks", {
+    data: {
+      targetType: "relay",
+      targetSlug: "openrouter",
+      url: "https://openrouter.ai/",
+      sourcePath: "/relays",
+    },
+  });
+  expect([200, 202]).toContain(valid.status());
+
+  const invalid = await request.post("/api/outbound-clicks", {
+    data: {
+      targetType: "relay",
+      targetSlug: "openrouter",
+      url: "https://evil.example/",
+      sourcePath: "/relays",
+    },
+  });
+  expect(invalid.status()).toBe(400);
+});
+
 test("admin dashboard is reachable in local bootstrap mode", async ({
   page,
 }) => {

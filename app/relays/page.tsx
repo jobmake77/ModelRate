@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { SiteShell } from "@/components/layout/site-shell";
+import { TrackedOutboundLink } from "@/components/public/tracked-outbound-link";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardBody } from "@/components/ui/card";
 import { getPublishedRelayStations } from "@/lib/data-access/relays";
@@ -95,14 +96,15 @@ export default async function RelayStationsPage() {
                   >
                     查看详情
                   </Link>
-                  <a
+                  <TrackedOutboundLink
                     className="text-slate-700 hover:underline"
-                    href={relay.websiteUrl}
-                    target="_blank"
-                    rel="noreferrer"
+                    sourcePath="/relays"
+                    targetSlug={relay.slug}
+                    targetType="relay"
+                    url={relay.websiteUrl}
                   >
                     访问官网
-                  </a>
+                  </TrackedOutboundLink>
                 </div>
               </CardBody>
             </Card>

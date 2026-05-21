@@ -161,3 +161,15 @@ test("admin ad placements page is reachable and disabled by default", async ({
   await expect(page.getByText("Home sidebar")).toBeVisible();
   await expect(page.getByText("disabled").first()).toBeVisible();
 });
+
+test("admin relays page is reachable in local bootstrap mode", async ({
+  page,
+}) => {
+  await page.goto("/admin/relays");
+
+  await expect(
+    page.getByRole("heading", { name: "Relay Stations" }),
+  ).toBeVisible();
+  await expect(page.getByText("OpenRouter")).toBeVisible();
+  await expect(page.getByRole("button", { name: "Create" })).toBeVisible();
+});

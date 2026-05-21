@@ -173,3 +173,15 @@ test("admin relays page is reachable in local bootstrap mode", async ({
   await expect(page.getByText("OpenRouter")).toBeVisible();
   await expect(page.getByRole("button", { name: "Create" })).toBeVisible();
 });
+
+test("admin relay prices page is reachable in local bootstrap mode", async ({
+  page,
+}) => {
+  await page.goto("/admin/relay-prices");
+
+  await expect(
+    page.getByRole("heading", { name: "Relay Model Prices" }),
+  ).toBeVisible();
+  await expect(page.getByText("Create relay model price")).toBeVisible();
+  await expect(page.getByText("No relay prices yet.")).toBeVisible();
+});

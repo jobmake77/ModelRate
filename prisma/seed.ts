@@ -5,7 +5,11 @@ import {
   models,
   providers,
 } from "../lib/fixtures/model-data";
-import { relayStations, riskTags } from "../lib/fixtures/relay-data";
+import {
+  relayModelPrices,
+  relayStations,
+  riskTags,
+} from "../lib/fixtures/relay-data";
 
 const prisma = new PrismaClient();
 
@@ -169,6 +173,46 @@ async function main() {
         },
       });
     }
+  }
+
+  for (const price of relayModelPrices) {
+    const relay = await prisma.relayStation.findUniqueOrThrow({
+      where: { slug: price.relaySlug },
+    });
+    const model = await prisma.model.findUniqueOrThrow({
+      where: { slug: price.modelSlug },
+    });
+
+    await prisma.relayModelPrice.deleteMany({
+      where: {
+        relayStationId: relay.id,
+        modelId: model.id,
+        routeName: price.routeName,
+        isCurrent: true,
+      },
+    });
+
+    await prisma.relayModelPrice.create({
+      data: {
+        relayStationId: relay.id,
+        modelId: model.id,
+        routeName: price.routeName,
+        billingType: price.billingType,
+        modelMultiplier: price.modelMultiplier,
+        completionMultiplier: price.completionMultiplier,
+        groupMultiplier: price.groupMultiplier,
+        routeMultiplier: price.routeMultiplier,
+        inputPricePer1M: price.inputPricePer1M,
+        outputPricePer1M: price.outputPricePer1M,
+        currency: price.currency,
+        sourceUrl: price.sourceUrl,
+        lastCheckedAt: price.lastCheckedAt
+          ? new Date(price.lastCheckedAt)
+          : null,
+        isCurrent: price.isCurrent,
+        notes: price.notes,
+      },
+    });
   }
 
   await prisma.adPlacement.upsert({

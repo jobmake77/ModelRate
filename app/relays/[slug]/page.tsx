@@ -4,8 +4,11 @@ import { SiteShell } from "@/components/layout/site-shell";
 import { TrackedOutboundLink } from "@/components/public/tracked-outbound-link";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardBody, CardHeader } from "@/components/ui/card";
-import { getRelayStationBySlug } from "@/lib/data-access/relays";
-import { formatDate } from "@/lib/formatters/number";
+import {
+  getCurrentRelayModelPrices,
+  getRelayStationBySlug,
+} from "@/lib/data-access/relays";
+import { formatDate, formatUsd } from "@/lib/formatters/number";
 
 type Props = {
   params: Promise<{ slug: string }>;
@@ -27,7 +30,10 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 export default async function RelayStationDetailPage({ params }: Props) {
   const { slug } = await params;
-  const relay = await getRelayStationBySlug(slug);
+  const [relay, relayPrices] = await Promise.all([
+    getRelayStationBySlug(slug),
+    getCurrentRelayModelPrices(slug),
+  ]);
 
   if (!relay) {
     notFound();
@@ -125,6 +131,96 @@ export default async function RelayStationDetailPage({ params }: Props) {
             </CardBody>
           </Card>
         </div>
+
+        <section className="mt-6 rounded-lg border border-slate-200 bg-white shadow-sm">
+          <div className="border-b border-slate-200 px-5 py-4">
+            <h2 className="font-semibold">模型价格和倍率</h2>
+            <p className="mt-1 text-sm text-slate-600">
+              这里展示当前已维护的中转站模型价格或倍率。价格和倍率可能随服务商调整变化。
+            </p>
+          </div>
+          {relayPrices.length ? (
+            <div className="overflow-x-auto">
+              <table className="min-w-full divide-y divide-slate-200 text-sm">
+                <thead className="bg-slate-50 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
+                  <tr>
+                    <th className="px-4 py-3">Model</th>
+                    <th className="px-4 py-3">Route</th>
+                    <th className="px-4 py-3">Multiplier</th>
+                    <th className="px-4 py-3">Direct price</th>
+                    <th className="px-4 py-3">Source</th>
+                    <th className="px-4 py-3">Last checked</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {relayPrices.map((price) => (
+                    <tr
+                      key={`${price.modelSlug}-${price.routeName ?? "default"}`}
+                    >
+                      <td className="px-4 py-4 font-medium">
+                        {price.modelName}
+                      </td>
+                      <td className="px-4 py-4">
+                        {price.routeName ?? "default"}
+                      </td>
+                      <td className="px-4 py-4">
+                        <div>
+                          Model:{" "}
+                          {price.modelMultiplier === null
+                            ? "N/A"
+                            : `${price.modelMultiplier}x`}
+                        </div>
+                        <div className="text-slate-500">
+                          Completion:{" "}
+                          {price.completionMultiplier === null
+                            ? "N/A"
+                            : `${price.completionMultiplier}x`}
+                        </div>
+                      </td>
+                      <td className="px-4 py-4">
+                        <div>
+                          In:{" "}
+                          {price.inputPricePer1M === null
+                            ? "N/A"
+                            : `${formatUsd(price.inputPricePer1M)} / 1M`}
+                        </div>
+                        <div className="text-slate-500">
+                          Out:{" "}
+                          {price.outputPricePer1M === null
+                            ? "N/A"
+                            : `${formatUsd(price.outputPricePer1M)} / 1M`}
+                        </div>
+                      </td>
+                      <td className="px-4 py-4">
+                        {price.sourceUrl ? (
+                          <a
+                            className="text-blue-700 hover:underline"
+                            href={price.sourceUrl}
+                            rel="noopener noreferrer"
+                            target="_blank"
+                          >
+                            Source
+                          </a>
+                        ) : (
+                          "N/A"
+                        )}
+                      </td>
+                      <td className="px-4 py-4">
+                        {price.lastCheckedAt
+                          ? formatDate(price.lastCheckedAt)
+                          : "N/A"}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <div className="p-5 text-sm text-slate-500">
+              暂无已维护的当前模型价格。使用前请以服务商实际账单为准。
+            </div>
+          )}
+        </section>
       </div>
     </SiteShell>
   );

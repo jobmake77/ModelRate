@@ -1,7 +1,10 @@
 import { getPrisma, hasDatabaseUrl } from "@/lib/db/client";
+import { models } from "@/lib/fixtures/model-data";
 import {
+  relayModelPrices,
   relayStations,
   riskTags,
+  type RelayModelPriceFixture,
   type RelayStationFixture,
 } from "@/lib/fixtures/relay-data";
 
@@ -11,6 +14,10 @@ export type RelayStationPublic = RelayStationFixture & {
 
 export type AdminRelayRow = RelayStationPublic & {
   id: string;
+};
+
+export type RelayModelPricePublic = RelayModelPriceFixture & {
+  modelName: string;
 };
 
 export async function getPublishedRelayStations(): Promise<
@@ -73,6 +80,53 @@ export async function getPublishedRelayStations(): Promise<
 export async function getRelayStationBySlug(slug: string) {
   const relays = await getPublishedRelayStations();
   return relays.find((relay) => relay.slug === slug) ?? null;
+}
+
+export async function getCurrentRelayModelPrices(
+  relaySlug: string,
+): Promise<RelayModelPricePublic[]> {
+  if (!hasDatabaseUrl) {
+    return getFixtureRelayModelPrices(relaySlug);
+  }
+
+  try {
+    const rows = await getPrisma().relayModelPrice.findMany({
+      where: {
+        isCurrent: true,
+        relayStation: {
+          slug: relaySlug,
+          status: "published",
+        },
+      },
+      include: { model: true, relayStation: true },
+      orderBy: [{ model: { displayName: "asc" } }, { routeName: "asc" }],
+    });
+
+    return rows.map((row) => ({
+      relaySlug: row.relayStation.slug,
+      modelSlug: row.model.slug,
+      modelName: row.model.displayName,
+      routeName: row.routeName,
+      billingType: row.billingType,
+      modelMultiplier: row.modelMultiplier ? Number(row.modelMultiplier) : null,
+      completionMultiplier: row.completionMultiplier
+        ? Number(row.completionMultiplier)
+        : null,
+      groupMultiplier: Number(row.groupMultiplier),
+      routeMultiplier: Number(row.routeMultiplier),
+      inputPricePer1M: row.inputPricePer1M ? Number(row.inputPricePer1M) : null,
+      outputPricePer1M: row.outputPricePer1M
+        ? Number(row.outputPricePer1M)
+        : null,
+      currency: row.currency,
+      sourceUrl: row.sourceUrl,
+      lastCheckedAt: row.lastCheckedAt?.toISOString() ?? null,
+      isCurrent: row.isCurrent,
+      notes: row.notes,
+    }));
+  } catch {
+    return getFixtureRelayModelPrices(relaySlug);
+  }
 }
 
 export async function getAdminRelayStations(): Promise<AdminRelayRow[]> {
@@ -140,4 +194,19 @@ function getFixtureRelays(): RelayStationPublic[] {
         relay.riskTags.includes(tag.slug),
       ),
     }));
+}
+
+function getFixtureRelayModelPrices(
+  relaySlug: string,
+): RelayModelPricePublic[] {
+  return relayModelPrices
+    .filter((price) => price.relaySlug === relaySlug && price.isCurrent)
+    .map((price) => {
+      const model = models.find((item) => item.slug === price.modelSlug);
+
+      return {
+        ...price,
+        modelName: model?.displayName ?? price.modelSlug,
+      };
+    });
 }

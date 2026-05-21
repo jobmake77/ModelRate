@@ -24,6 +24,24 @@ export type RelayStationFixture = {
   lastCheckedAt: string;
 };
 
+export type RelayModelPriceFixture = {
+  relaySlug: string;
+  modelSlug: string;
+  routeName: string | null;
+  billingType: string;
+  modelMultiplier: number | null;
+  completionMultiplier: number | null;
+  groupMultiplier: number;
+  routeMultiplier: number;
+  inputPricePer1M: number | null;
+  outputPricePer1M: number | null;
+  currency: string;
+  sourceUrl: string | null;
+  lastCheckedAt: string | null;
+  isCurrent: boolean;
+  notes: string | null;
+};
+
 export const riskTags = [
   {
     slug: "new-station",
@@ -212,5 +230,42 @@ export const relayStations: RelayStationFixture[] = [
     riskTags: ["no-public-pricing"],
     sourceUrl: "https://example.invalid/",
     lastCheckedAt: "2026-05-21T00:00:00.000Z",
+  },
+];
+
+export const relayModelPrices: RelayModelPriceFixture[] = [
+  {
+    relaySlug: "openrouter",
+    modelSlug: "gpt-4o-mini",
+    routeName: "default",
+    billingType: "token",
+    modelMultiplier: null,
+    completionMultiplier: null,
+    groupMultiplier: 1,
+    routeMultiplier: 1,
+    inputPricePer1M: 0.15,
+    outputPricePer1M: 0.6,
+    currency: "USD",
+    sourceUrl: "https://openrouter.ai/pricing",
+    lastCheckedAt: "2026-05-21T00:00:00.000Z",
+    isCurrent: true,
+    notes: "Fixture example based on public pricing page.",
+  },
+  {
+    relaySlug: "302-ai",
+    modelSlug: "gpt-4o-mini",
+    routeName: "one-api-compatible",
+    billingType: "multiplier",
+    modelMultiplier: 0.075,
+    completionMultiplier: 4,
+    groupMultiplier: 1,
+    routeMultiplier: 1,
+    inputPricePer1M: null,
+    outputPricePer1M: null,
+    currency: "USD",
+    sourceUrl: "https://howtok.net/",
+    lastCheckedAt: "2026-05-21T00:00:00.000Z",
+    isCurrent: true,
+    notes: "Manual planning estimate. Verify before production use.",
   },
 ];

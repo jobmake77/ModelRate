@@ -55,6 +55,8 @@ test("relays page displays risk and referral metadata", async ({ page }) => {
   await page.getByRole("link", { name: "OpenRouter" }).click();
   await expect(page.getByRole("heading", { name: "OpenRouter" })).toBeVisible();
   await expect(page.getByText("风险和商业关系")).toBeVisible();
+  await expect(page.getByText("模型价格和倍率")).toBeVisible();
+  await expect(page.getByText("GPT-4o mini")).toBeVisible();
 });
 
 test("guides page links to a useful guide detail", async ({ page }) => {

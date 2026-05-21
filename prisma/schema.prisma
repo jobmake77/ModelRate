@@ -1,0 +1,339 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum ProviderStatus {
+  active
+  inactive
+}
+
+enum ModelStatus {
+  active
+  deprecated
+  hidden
+}
+
+enum PriceSourceType {
+  official
+  openrouter
+  litellm
+  portkey
+  manual
+  relay
+}
+
+enum RelayStatus {
+  draft
+  published
+  hidden
+  archived
+}
+
+enum RiskLevel {
+  unknown
+  low
+  medium
+  high
+}
+
+enum GuideStatus {
+  draft
+  published
+  archived
+}
+
+enum SubmissionType {
+  relay_submission
+  price_correction
+  model_correction
+  general_feedback
+}
+
+enum SubmissionStatus {
+  pending
+  approved
+  rejected
+}
+
+enum AdminRole {
+  owner
+  admin
+  editor
+  viewer
+}
+
+model Provider {
+  id          String         @id @default(uuid()) @db.Uuid
+  slug        String         @unique
+  name        String
+  websiteUrl  String?        @map("website_url")
+  logoUrl     String?        @map("logo_url")
+  description String?
+  status      ProviderStatus @default(active)
+  models      Model[]
+  createdAt   DateTime       @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt   DateTime       @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  @@map("providers")
+}
+
+model Model {
+  id                      String            @id @default(uuid()) @db.Uuid
+  providerId              String            @map("provider_id") @db.Uuid
+  provider                Provider          @relation(fields: [providerId], references: [id], onDelete: Restrict)
+  slug                    String            @unique
+  canonicalModelId        String            @map("canonical_model_id")
+  displayName             String            @map("display_name")
+  family                  String?
+  description             String?
+  contextWindow           Int?              @map("context_window")
+  maxOutputTokens         Int?              @map("max_output_tokens")
+  supportsText            Boolean           @default(true) @map("supports_text")
+  supportsVision          Boolean           @default(false) @map("supports_vision")
+  supportsAudio           Boolean           @default(false) @map("supports_audio")
+  supportsImageGeneration Boolean           @default(false) @map("supports_image_generation")
+  supportsEmbedding       Boolean           @default(false) @map("supports_embedding")
+  supportsFunctionCalling Boolean           @default(false) @map("supports_function_calling")
+  supportsReasoning       Boolean           @default(false) @map("supports_reasoning")
+  status                  ModelStatus       @default(active)
+  sourceUrl               String?           @map("source_url")
+  lastCheckedAt           DateTime?         @map("last_checked_at") @db.Timestamptz(6)
+  prices                  ModelPrice[]
+  relayPrices             RelayModelPrice[]
+  createdAt               DateTime          @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt               DateTime          @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  @@unique([providerId, canonicalModelId])
+  @@index([providerId])
+  @@index([status])
+  @@map("models")
+}
+
+model ModelPrice {
+  id                       String          @id @default(uuid()) @db.Uuid
+  modelId                  String          @map("model_id") @db.Uuid
+  model                    Model           @relation(fields: [modelId], references: [id], onDelete: Cascade)
+  sourceType               PriceSourceType @map("source_type")
+  sourceName               String          @map("source_name")
+  sourceUrl                String          @map("source_url")
+  currency                 String          @default("USD")
+  inputPricePer1M          Decimal         @map("input_price_per_1m") @db.Decimal(18, 8)
+  outputPricePer1M         Decimal         @map("output_price_per_1m") @db.Decimal(18, 8)
+  cachedInputPricePer1M    Decimal?        @map("cached_input_price_per_1m") @db.Decimal(18, 8)
+  cachedOutputPricePer1M   Decimal?        @map("cached_output_price_per_1m") @db.Decimal(18, 8)
+  reasoningPricePer1M      Decimal?        @map("reasoning_price_per_1m") @db.Decimal(18, 8)
+  imagePricePerUnit        Decimal?        @map("image_price_per_unit") @db.Decimal(18, 8)
+  audioInputPricePer1M     Decimal?        @map("audio_input_price_per_1m") @db.Decimal(18, 8)
+  audioOutputPricePer1M    Decimal?        @map("audio_output_price_per_1m") @db.Decimal(18, 8)
+  effectiveFrom            DateTime?       @map("effective_from") @db.Date
+  lastCheckedAt            DateTime        @map("last_checked_at") @db.Timestamptz(6)
+  isCurrent                Boolean         @default(true) @map("is_current")
+  notes                    String?
+  createdAt                DateTime        @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt                DateTime        @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  @@index([modelId])
+  @@index([sourceType])
+  @@index([isCurrent])
+  @@map("model_prices")
+}
+
+model RelayStation {
+  id                     String                @id @default(uuid()) @db.Uuid
+  slug                   String                @unique
+  name                   String
+  domain                 String                @unique
+  websiteUrl             String                @map("website_url")
+  logoUrl                String?               @map("logo_url")
+  description            String?
+  billingModes           String[]              @map("billing_modes")
+  paymentMethods         String[]              @map("payment_methods")
+  minimumTopUpAmount     Decimal?              @map("minimum_top_up_amount") @db.Decimal(18, 4)
+  minimumTopUpCurrency   String?               @map("minimum_top_up_currency")
+  supportChannels        String[]              @map("support_channels")
+  hasPublicPricing       Boolean               @default(false) @map("has_public_pricing")
+  hasTrialCredit         Boolean               @default(false) @map("has_trial_credit")
+  hasReferralProgram     Boolean               @default(false) @map("has_referral_program")
+  referralUrl            String?               @map("referral_url")
+  couponCode             String?               @map("coupon_code")
+  isSponsored            Boolean               @default(false) @map("is_sponsored")
+  isVerified             Boolean               @default(false) @map("is_verified")
+  status                 RelayStatus           @default(draft)
+  riskLevel              RiskLevel             @default(unknown) @map("risk_level")
+  lastCheckedAt          DateTime?             @map("last_checked_at") @db.Timestamptz(6)
+  relayModelPrices       RelayModelPrice[]
+  riskTags               RelayStationRiskTag[]
+  createdAt              DateTime              @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt              DateTime              @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  @@index([status])
+  @@index([isSponsored])
+  @@map("relay_stations")
+}
+
+model RelayModelPrice {
+  id                   String       @id @default(uuid()) @db.Uuid
+  relayStationId       String       @map("relay_station_id") @db.Uuid
+  relayStation         RelayStation @relation(fields: [relayStationId], references: [id], onDelete: Cascade)
+  modelId              String       @map("model_id") @db.Uuid
+  model                Model        @relation(fields: [modelId], references: [id], onDelete: Cascade)
+  routeName            String?      @map("route_name")
+  billingType          String       @default("token") @map("billing_type")
+  modelMultiplier      Decimal?     @map("model_multiplier") @db.Decimal(12, 6)
+  completionMultiplier Decimal?     @map("completion_multiplier") @db.Decimal(12, 6)
+  groupMultiplier      Decimal      @default(1) @map("group_multiplier") @db.Decimal(12, 6)
+  routeMultiplier      Decimal      @default(1) @map("route_multiplier") @db.Decimal(12, 6)
+  inputPricePer1M      Decimal?     @map("input_price_per_1m") @db.Decimal(18, 8)
+  outputPricePer1M     Decimal?     @map("output_price_per_1m") @db.Decimal(18, 8)
+  currency             String       @default("USD")
+  sourceUrl            String?      @map("source_url")
+  lastCheckedAt        DateTime?    @map("last_checked_at") @db.Timestamptz(6)
+  isCurrent            Boolean      @default(true) @map("is_current")
+  notes                String?
+  createdAt            DateTime     @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt            DateTime     @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  @@index([relayStationId])
+  @@index([modelId])
+  @@index([isCurrent])
+  @@map("relay_model_prices")
+}
+
+model RiskTag {
+  id            String                @id @default(uuid()) @db.Uuid
+  slug          String                @unique
+  label         String
+  description   String?
+  severity      String                @default("info")
+  relayStations RelayStationRiskTag[]
+  createdAt     DateTime              @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt     DateTime              @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  @@map("risk_tags")
+}
+
+model RelayStationRiskTag {
+  relayStationId String       @map("relay_station_id") @db.Uuid
+  relayStation   RelayStation @relation(fields: [relayStationId], references: [id], onDelete: Cascade)
+  riskTagId      String       @map("risk_tag_id") @db.Uuid
+  riskTag        RiskTag      @relation(fields: [riskTagId], references: [id], onDelete: Cascade)
+  createdAt      DateTime     @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@id([relayStationId, riskTagId])
+  @@map("relay_station_risk_tags")
+}
+
+model Guide {
+  id             String      @id @default(uuid()) @db.Uuid
+  slug           String      @unique
+  title          String
+  description    String
+  contentMd      String      @map("content_md")
+  category       String
+  status         GuideStatus @default(draft)
+  seoTitle       String      @map("seo_title")
+  seoDescription String      @map("seo_description")
+  publishedAt    DateTime?   @map("published_at") @db.Timestamptz(6)
+  createdAt      DateTime    @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt      DateTime    @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  @@index([status])
+  @@map("guides")
+}
+
+model Faq {
+  id          String   @id @default(uuid()) @db.Uuid
+  question    String
+  answerMd    String   @map("answer_md")
+  category    String?
+  targetType  String?  @map("target_type")
+  targetId    String?  @map("target_id") @db.Uuid
+  sortOrder   Int      @default(0) @map("sort_order")
+  isPublished Boolean  @default(true) @map("is_published")
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt   DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  @@map("faqs")
+}
+
+model ExchangeRate {
+  id            String   @id @default(uuid()) @db.Uuid
+  baseCurrency  String   @map("base_currency")
+  quoteCurrency String   @map("quote_currency")
+  rate          Decimal  @db.Decimal(18, 8)
+  sourceName    String?  @map("source_name")
+  sourceUrl     String?  @map("source_url")
+  fetchedAt     DateTime @map("fetched_at") @db.Timestamptz(6)
+  createdAt     DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@index([baseCurrency, quoteCurrency])
+  @@map("exchange_rates")
+}
+
+model Submission {
+  id             String           @id @default(uuid()) @db.Uuid
+  type           SubmissionType
+  status         SubmissionStatus @default(pending)
+  submitterName  String?          @map("submitter_name")
+  submitterEmail String?          @map("submitter_email")
+  payload        Json
+  reviewNotes    String?          @map("review_notes")
+  reviewedBy     String?          @map("reviewed_by") @db.Uuid
+  reviewedAt     DateTime?        @map("reviewed_at") @db.Timestamptz(6)
+  createdAt      DateTime         @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt      DateTime         @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  @@index([status])
+  @@map("submissions")
+}
+
+model OutboundClick {
+  id          String   @id @default(uuid()) @db.Uuid
+  targetType  String   @map("target_type")
+  targetId    String?  @map("target_id") @db.Uuid
+  url         String
+  sourcePath  String?  @map("source_path")
+  utmSource   String?  @map("utm_source")
+  utmMedium   String?  @map("utm_medium")
+  utmCampaign String?  @map("utm_campaign")
+  ipHash      String?  @map("ip_hash")
+  userAgent   String?  @map("user_agent")
+  referer     String?
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@index([targetType, targetId])
+  @@map("outbound_clicks")
+}
+
+model AdPlacement {
+  id        String   @id @default(uuid()) @db.Uuid
+  slotKey   String   @unique @map("slot_key")
+  name      String
+  pageType  String   @map("page_type")
+  position  String
+  provider  String
+  adCode    String?  @map("ad_code")
+  isEnabled Boolean  @default(false) @map("is_enabled")
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  @@map("ad_placements")
+}
+
+model AdminUser {
+  id          String    @id @default(uuid()) @db.Uuid
+  authUserId  String?   @unique @map("auth_user_id")
+  email       String    @unique
+  name        String?
+  role        AdminRole @default(editor)
+  status      String    @default("active")
+  lastLoginAt DateTime? @map("last_login_at") @db.Timestamptz(6)
+  createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt   DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  @@map("admin_users")
+}

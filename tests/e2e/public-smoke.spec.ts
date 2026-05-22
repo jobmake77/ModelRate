@@ -177,6 +177,8 @@ test("admin dashboard is reachable in local bootstrap mode", async ({
     page.getByRole("heading", { name: "Admin Dashboard" }),
   ).toBeVisible();
   await expect(page.getByRole("link", { name: "Models" })).toBeVisible();
+  await expect(page.getByText("Relay stations")).toBeVisible();
+  await expect(page.getByText("Pending submissions")).toBeVisible();
 });
 
 test("admin ad placements page is reachable and disabled by default", async ({

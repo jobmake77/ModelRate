@@ -110,6 +110,18 @@ npm run db:generate
 npm run db:seed
 ```
 
+8. Validate launch data quality:
+
+```bash
+npm run ops:validate-launch-data
+```
+
+Use strict mode for a public launch gate:
+
+```bash
+npm run ops:validate-launch-data:strict
+```
+
 Current seed data includes providers, models, current model prices, exchange rates, relay stations, relay model prices, ad placements, guides and admin users.
 
 Post-seed checks:

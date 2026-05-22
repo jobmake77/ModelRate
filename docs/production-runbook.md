@@ -36,8 +36,9 @@ Database bootstrap:
 
 ```bash
 npm run db:validate
-npx prisma migrate deploy
+npm run db:migrate:deploy
 npm run db:seed
+npm run ops:validate-launch-data
 ```
 
 Post-seed verification:
@@ -47,6 +48,7 @@ Post-seed verification:
 - Current model prices have `sourceUrl` and `lastCheckedAt`.
 - Public relay records have clear risk, referral and sponsored metadata.
 - Ad placements exist but are disabled.
+- For a stricter go/no-go gate, run `npm run ops:validate-launch-data:strict` and treat warnings as blockers.
 
 ## 3. Vercel Setup
 

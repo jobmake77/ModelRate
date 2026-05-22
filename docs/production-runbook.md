@@ -41,6 +41,8 @@ npm run db:seed
 npm run ops:validate-launch-data
 ```
 
+`npm run db:migrate:deploy` uses `DIRECT_URL` through `prisma.config.ts`; keep `DATABASE_URL` as the pooled runtime connection string.
+
 Post-seed verification:
 
 - `admin_users` has at least one `owner` with `status = active`.

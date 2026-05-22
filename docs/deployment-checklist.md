@@ -77,7 +77,7 @@ NEXT_PUBLIC_ANALYTICS_DOMAIN
 Environment rules:
 
 - `DATABASE_URL` must use the Supabase pooled connection string.
-- `DIRECT_URL` must use the Supabase direct connection string for Prisma migrations and administrative operations.
+- `DIRECT_URL` must use the Supabase direct connection string for Prisma migrations. `prisma.config.ts` prefers `DIRECT_URL` for Prisma CLI commands.
 - `SUPABASE_SERVICE_ROLE_KEY` must never be exposed to client code or public logs.
 - `CLICK_HASH_SALT` must be a production-only random secret. Do not rely on the local fallback.
 - `NEXT_PUBLIC_SITE_URL` must match the canonical production origin before sitemap, robots and auth redirect checks.

@@ -1,6 +1,6 @@
 # ModelRate Deployment Checklist
 
-This checklist keeps the first production launch boring: one Next.js full-stack app on Vercel, Supabase Postgres/Auth, and manual data operations through the admin dashboard. Use it together with `docs/launch-hardening-plan.md`.
+This checklist keeps the first production launch boring: one Next.js full-stack app on Vercel, Supabase Postgres/Auth, and manual data operations through the admin dashboard. Use it together with `docs/launch-hardening-plan.md` and `docs/production-runbook.md`.
 
 ## Launch Priority Gate
 

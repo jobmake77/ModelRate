@@ -20,6 +20,7 @@ export function RelayDirectory({ relays }: Props) {
   const [query, setQuery] = useState("");
   const [risk, setRisk] = useState<RiskFilter>("all");
   const [paymentMethod, setPaymentMethod] = useState("all");
+  const [provider, setProvider] = useState("all");
   const [pricing, setPricing] = useState<PricingFilter>("all");
   const [sortKey, setSortKey] = useState<SortKey>("name");
 
@@ -28,6 +29,14 @@ export function RelayDirectory({ relays }: Props) {
       Array.from(new Set(relays.flatMap((relay) => relay.paymentMethods))).sort(
         (left, right) => left.localeCompare(right),
       ),
+    [relays],
+  );
+
+  const providers = useMemo(
+    () =>
+      Array.from(
+        new Set(relays.flatMap((relay) => relay.supportedProviders)),
+      ).sort((left, right) => left.localeCompare(right)),
     [relays],
   );
 
@@ -51,12 +60,20 @@ export function RelayDirectory({ relays }: Props) {
         const matchesPayment =
           paymentMethod === "all" ||
           relay.paymentMethods.includes(paymentMethod);
+        const matchesProvider =
+          provider === "all" || relay.supportedProviders.includes(provider);
         const matchesPricing =
           pricing === "all" ||
           (pricing === "public" && relay.hasPublicPricing) ||
           (pricing === "unclear" && !relay.hasPublicPricing);
 
-        return matchesQuery && matchesRisk && matchesPayment && matchesPricing;
+        return (
+          matchesQuery &&
+          matchesRisk &&
+          matchesPayment &&
+          matchesProvider &&
+          matchesPricing
+        );
       })
       .sort((left, right) => {
         if (sortKey === "last-checked") {
@@ -72,12 +89,12 @@ export function RelayDirectory({ relays }: Props) {
 
         return left.name.localeCompare(right.name);
       });
-  }, [paymentMethod, pricing, query, relays, risk, sortKey]);
+  }, [paymentMethod, pricing, provider, query, relays, risk, sortKey]);
 
   return (
     <div className="grid gap-4">
       <div className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
-        <div className="grid gap-3 lg:grid-cols-[minmax(220px,1fr)_150px_180px_160px_160px]">
+        <div className="grid gap-3 lg:grid-cols-[minmax(220px,1fr)_140px_160px_160px_150px_140px]">
           <label className="grid gap-1 text-sm">
             <span className="font-medium">Search</span>
             <input
@@ -113,6 +130,21 @@ export function RelayDirectory({ relays }: Props) {
               {paymentMethods.map((method) => (
                 <option key={method} value={method}>
                   {method}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label className="grid gap-1 text-sm">
+            <span className="font-medium">Provider</span>
+            <select
+              className="rounded-md border border-slate-300 px-3 py-2"
+              value={provider}
+              onChange={(event) => setProvider(event.target.value)}
+            >
+              <option value="all">All providers</option>
+              {providers.map((providerName) => (
+                <option key={providerName} value={providerName}>
+                  {providerName}
                 </option>
               ))}
             </select>
@@ -197,6 +229,14 @@ export function RelayDirectory({ relays }: Props) {
                   <dd>
                     {relay.minimumTopUpAmount
                       ? `${relay.minimumTopUpCurrency} ${relay.minimumTopUpAmount}`
+                      : "Unknown"}
+                  </dd>
+                </div>
+                <div className="flex justify-between gap-4">
+                  <dt className="text-slate-500">模型厂商</dt>
+                  <dd className="text-right">
+                    {relay.supportedProviders.length
+                      ? relay.supportedProviders.join(", ")
                       : "Unknown"}
                   </dd>
                 </div>

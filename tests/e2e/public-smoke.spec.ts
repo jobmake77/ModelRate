@@ -75,6 +75,10 @@ test("relays page displays risk and referral metadata", async ({ page }) => {
     page.getByRole("link", { name: "OpenRouter" }),
   ).not.toBeVisible();
   await page.getByLabel("Payment").selectOption("all");
+  await page.getByLabel("Provider").selectOption("xAI");
+  await expect(page.getByRole("link", { name: "Crazyrouter" })).toBeVisible();
+  await expect(page.getByRole("link", { name: "302.AI" })).not.toBeVisible();
+  await page.getByLabel("Provider").selectOption("all");
   await page.getByRole("link", { name: "OpenRouter" }).click();
   await expect(page.getByRole("heading", { name: "OpenRouter" })).toBeVisible();
   await expect(page.getByText("风险和商业关系")).toBeVisible();

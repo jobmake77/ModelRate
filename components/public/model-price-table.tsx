@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { ModelWithPrice } from "@/lib/data-access/models";
 import { formatDate, formatNumber, formatUsd } from "@/lib/formatters/number";
@@ -10,20 +10,16 @@ type CapabilityFilter = "all" | "vision" | "reasoning" | "tools";
 type SortKey = "provider" | "input-price" | "output-price" | "context";
 
 type Props = {
+  initialFilters?: {
+    capability: string;
+    provider: string;
+    query: string;
+    sortKey: string;
+  };
   models: ModelWithPrice[];
 };
 
-export function ModelPriceTable({ models }: Props) {
-  const [query, setQuery] = useState("");
-  const [provider, setProvider] = useState("all");
-  const [capability, setCapability] = useState<CapabilityFilter>("all");
-  const [sortKey, setSortKey] = useState<SortKey>("provider");
-  const hasActiveFilters =
-    query.trim() !== "" ||
-    provider !== "all" ||
-    capability !== "all" ||
-    sortKey !== "provider";
-
+export function ModelPriceTable({ initialFilters, models }: Props) {
   const providers = useMemo(
     () =>
       Array.from(new Set(models.map((model) => model.provider.name))).sort(
@@ -31,6 +27,33 @@ export function ModelPriceTable({ models }: Props) {
       ),
     [models],
   );
+
+  const [query, setQuery] = useState(initialFilters?.query ?? "");
+  const [provider, setProvider] = useState(
+    initialFilters?.provider && providers.includes(initialFilters.provider)
+      ? initialFilters.provider
+      : "all",
+  );
+  const [capability, setCapability] = useState<CapabilityFilter>(
+    normalizeCapabilityFilter(initialFilters?.capability),
+  );
+  const [sortKey, setSortKey] = useState<SortKey>(
+    normalizeModelSortKey(initialFilters?.sortKey),
+  );
+  const hasActiveFilters =
+    query.trim() !== "" ||
+    provider !== "all" ||
+    capability !== "all" ||
+    sortKey !== "provider";
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    setQueryParam(params, "q", query.trim());
+    setQueryParam(params, "provider", provider === "all" ? "" : provider);
+    setQueryParam(params, "capability", capability === "all" ? "" : capability);
+    setQueryParam(params, "sort", sortKey === "provider" ? "" : sortKey);
+    replaceCurrentQuery(params);
+  }, [capability, provider, query, sortKey]);
 
   const filteredModels = useMemo(() => {
     const normalizedQuery = query.trim().toLowerCase();
@@ -253,4 +276,48 @@ function priceValue(model: ModelWithPrice, kind: "input" | "output") {
   return kind === "input"
     ? model.currentPrice.inputPricePer1M
     : model.currentPrice.outputPricePer1M;
+}
+
+function isCapabilityFilter(value: string | null): value is CapabilityFilter {
+  return (
+    value === "all" ||
+    value === "vision" ||
+    value === "reasoning" ||
+    value === "tools"
+  );
+}
+
+function isModelSortKey(value: string | null): value is SortKey {
+  return (
+    value === "provider" ||
+    value === "input-price" ||
+    value === "output-price" ||
+    value === "context"
+  );
+}
+
+function normalizeCapabilityFilter(value: string | undefined) {
+  const normalized = value ?? "";
+  return isCapabilityFilter(normalized) ? normalized : "all";
+}
+
+function normalizeModelSortKey(value: string | undefined) {
+  const normalized = value ?? "";
+  return isModelSortKey(normalized) ? normalized : "provider";
+}
+
+function setQueryParam(params: URLSearchParams, key: string, value: string) {
+  if (value) {
+    params.set(key, value);
+  } else {
+    params.delete(key);
+  }
+}
+
+function replaceCurrentQuery(params: URLSearchParams) {
+  const query = params.toString();
+  const nextUrl = query
+    ? `${window.location.pathname}?${query}`
+    : window.location.pathname;
+  window.history.replaceState(null, "", nextUrl);
 }

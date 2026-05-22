@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { TrackedOutboundLink } from "@/components/public/tracked-outbound-link";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardBody } from "@/components/ui/card";
@@ -13,24 +13,18 @@ type PricingFilter = "all" | "public" | "unclear";
 type SortKey = "name" | "last-checked" | "top-up";
 
 type Props = {
+  initialFilters?: {
+    paymentMethod: string;
+    pricing: string;
+    provider: string;
+    query: string;
+    risk: string;
+    sortKey: string;
+  };
   relays: RelayStationPublic[];
 };
 
-export function RelayDirectory({ relays }: Props) {
-  const [query, setQuery] = useState("");
-  const [risk, setRisk] = useState<RiskFilter>("all");
-  const [paymentMethod, setPaymentMethod] = useState("all");
-  const [provider, setProvider] = useState("all");
-  const [pricing, setPricing] = useState<PricingFilter>("all");
-  const [sortKey, setSortKey] = useState<SortKey>("name");
-  const hasActiveFilters =
-    query.trim() !== "" ||
-    risk !== "all" ||
-    paymentMethod !== "all" ||
-    provider !== "all" ||
-    pricing !== "all" ||
-    sortKey !== "name";
-
+export function RelayDirectory({ initialFilters, relays }: Props) {
   const paymentMethods = useMemo(
     () =>
       Array.from(new Set(relays.flatMap((relay) => relay.paymentMethods))).sort(
@@ -46,6 +40,50 @@ export function RelayDirectory({ relays }: Props) {
       ).sort((left, right) => left.localeCompare(right)),
     [relays],
   );
+
+  const [query, setQuery] = useState(initialFilters?.query ?? "");
+  const [risk, setRisk] = useState<RiskFilter>(
+    normalizeRiskFilter(initialFilters?.risk),
+  );
+  const [paymentMethod, setPaymentMethod] = useState(
+    initialFilters?.paymentMethod &&
+      paymentMethods.includes(initialFilters.paymentMethod)
+      ? initialFilters.paymentMethod
+      : "all",
+  );
+  const [provider, setProvider] = useState(
+    initialFilters?.provider && providers.includes(initialFilters.provider)
+      ? initialFilters.provider
+      : "all",
+  );
+  const [pricing, setPricing] = useState<PricingFilter>(
+    normalizePricingFilter(initialFilters?.pricing),
+  );
+  const [sortKey, setSortKey] = useState<SortKey>(
+    normalizeRelaySortKey(initialFilters?.sortKey),
+  );
+  const hasActiveFilters =
+    query.trim() !== "" ||
+    risk !== "all" ||
+    paymentMethod !== "all" ||
+    provider !== "all" ||
+    pricing !== "all" ||
+    sortKey !== "name";
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    setQueryParam(params, "q", query.trim());
+    setQueryParam(params, "risk", risk === "all" ? "" : risk);
+    setQueryParam(
+      params,
+      "payment",
+      paymentMethod === "all" ? "" : paymentMethod,
+    );
+    setQueryParam(params, "provider", provider === "all" ? "" : provider);
+    setQueryParam(params, "pricing", pricing === "all" ? "" : pricing);
+    setQueryParam(params, "sort", sortKey === "name" ? "" : sortKey);
+    replaceCurrentQuery(params);
+  }, [paymentMethod, pricing, provider, query, risk, sortKey]);
 
   const filteredRelays = useMemo(() => {
     const normalizedQuery = query.trim().toLowerCase();
@@ -317,4 +355,53 @@ function topUpValue(relay: RelayStationPublic) {
   }
 
   return relay.minimumTopUpAmount;
+}
+
+function isRiskFilter(value: string | null): value is RiskFilter {
+  return (
+    value === "all" ||
+    value === "unknown" ||
+    value === "low" ||
+    value === "medium" ||
+    value === "high"
+  );
+}
+
+function isPricingFilter(value: string | null): value is PricingFilter {
+  return value === "all" || value === "public" || value === "unclear";
+}
+
+function isRelaySortKey(value: string | null): value is SortKey {
+  return value === "name" || value === "last-checked" || value === "top-up";
+}
+
+function normalizeRiskFilter(value: string | undefined) {
+  const normalized = value ?? "";
+  return isRiskFilter(normalized) ? normalized : "all";
+}
+
+function normalizePricingFilter(value: string | undefined) {
+  const normalized = value ?? "";
+  return isPricingFilter(normalized) ? normalized : "all";
+}
+
+function normalizeRelaySortKey(value: string | undefined) {
+  const normalized = value ?? "";
+  return isRelaySortKey(normalized) ? normalized : "name";
+}
+
+function setQueryParam(params: URLSearchParams, key: string, value: string) {
+  if (value) {
+    params.set(key, value);
+  } else {
+    params.delete(key);
+  }
+}
+
+function replaceCurrentQuery(params: URLSearchParams) {
+  const query = params.toString();
+  const nextUrl = query
+    ? `${window.location.pathname}?${query}`
+    : window.location.pathname;
+  window.history.replaceState(null, "", nextUrl);
 }

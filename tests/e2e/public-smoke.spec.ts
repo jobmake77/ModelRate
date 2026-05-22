@@ -24,9 +24,22 @@ test("models page displays source and last checked metadata", async ({
   await page.getByLabel("Provider").selectOption("Anthropic");
   await expect(page.getByText("Claude Sonnet 4.5")).toBeVisible();
   await expect(page.getByText("GPT-4o mini")).not.toBeVisible();
+  await expect(page).toHaveURL(/provider=Anthropic/);
   await page.getByRole("button", { name: "Reset filters" }).click();
+  await expect(page).toHaveURL(/\/models$/);
   await page.getByLabel("Search").fill("gpt-4o");
   await expect(page.getByText("GPT-4o mini")).toBeVisible();
+  await expect(page).toHaveURL(/q=gpt-4o/);
+});
+
+test("models page restores filters from URL", async ({ page }) => {
+  await page.goto("/models?provider=Anthropic&capability=vision&q=claude");
+
+  await expect(page.getByText("Claude Sonnet 4.5")).toBeVisible();
+  await expect(page.getByText("GPT-4o mini")).not.toBeVisible();
+  await expect(page.getByLabel("Provider")).toHaveValue("Anthropic");
+  await expect(page.getByLabel("Capability")).toHaveValue("vision");
+  await expect(page.getByLabel("Search")).toHaveValue("claude");
 });
 
 test("model detail links maintained relay pricing", async ({ page }) => {
@@ -78,12 +91,25 @@ test("relays page displays risk and referral metadata", async ({ page }) => {
   await page.getByLabel("Provider").selectOption("xAI");
   await expect(page.getByRole("link", { name: "Crazyrouter" })).toBeVisible();
   await expect(page.getByRole("link", { name: "302.AI" })).not.toBeVisible();
+  await expect(page).toHaveURL(/provider=xAI/);
   await page.getByRole("button", { name: "Reset filters" }).click();
+  await expect(page).toHaveURL(/\/relays$/);
   await page.getByRole("link", { name: "OpenRouter" }).click();
   await expect(page.getByRole("heading", { name: "OpenRouter" })).toBeVisible();
   await expect(page.getByText("风险和商业关系")).toBeVisible();
   await expect(page.getByText("模型价格和倍率")).toBeVisible();
   await expect(page.getByText("GPT-4o mini")).toBeVisible();
+});
+
+test("relays page restores filters from URL", async ({ page }) => {
+  await page.goto("/relays?payment=Alipay&provider=OpenAI");
+
+  await expect(page.getByRole("link", { name: "302.AI" })).toBeVisible();
+  await expect(
+    page.getByRole("link", { name: "OpenRouter" }),
+  ).not.toBeVisible();
+  await expect(page.getByLabel("Payment")).toHaveValue("Alipay");
+  await expect(page.getByLabel("Provider")).toHaveValue("OpenAI");
 });
 
 test("guides page links to a useful guide detail", async ({ page }) => {

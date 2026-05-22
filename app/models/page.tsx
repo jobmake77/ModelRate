@@ -8,8 +8,17 @@ export const metadata: Metadata = {
   description: "按统一 USD per 1M tokens 口径浏览主流 AI 模型输入和输出价格。",
 };
 
-export default async function ModelsPage() {
-  const models = await getModelsWithCurrentPrices();
+type SearchParams = Record<string, string | string[] | undefined>;
+
+type PageProps = {
+  searchParams?: Promise<SearchParams>;
+};
+
+export default async function ModelsPage({ searchParams }: PageProps) {
+  const [models, params] = await Promise.all([
+    getModelsWithCurrentPrices(),
+    searchParams ?? Promise.resolve({} as SearchParams),
+  ]);
 
   return (
     <SiteShell>
@@ -25,8 +34,20 @@ export default async function ModelsPage() {
           </p>
         </div>
 
-        <ModelPriceTable models={models} />
+        <ModelPriceTable
+          initialFilters={{
+            capability: getSearchParam(params.capability),
+            provider: getSearchParam(params.provider),
+            query: getSearchParam(params.q),
+            sortKey: getSearchParam(params.sort),
+          }}
+          models={models}
+        />
       </div>
     </SiteShell>
   );
+}
+
+function getSearchParam(value: string | string[] | undefined) {
+  return Array.isArray(value) ? (value[0] ?? "") : (value ?? "");
 }

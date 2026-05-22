@@ -9,8 +9,17 @@ export const metadata: Metadata = {
     "浏览 AI API 中转站候选、支付方式、起充金额、风险标签和数据来源。",
 };
 
-export default async function RelayStationsPage() {
-  const relays = await getPublishedRelayStations();
+type SearchParams = Record<string, string | string[] | undefined>;
+
+type PageProps = {
+  searchParams?: Promise<SearchParams>;
+};
+
+export default async function RelayStationsPage({ searchParams }: PageProps) {
+  const [relays, params] = await Promise.all([
+    getPublishedRelayStations(),
+    searchParams ?? Promise.resolve({} as SearchParams),
+  ]);
 
   return (
     <SiteShell>
@@ -26,8 +35,22 @@ export default async function RelayStationsPage() {
           </p>
         </div>
 
-        <RelayDirectory relays={relays} />
+        <RelayDirectory
+          initialFilters={{
+            paymentMethod: getSearchParam(params.payment),
+            pricing: getSearchParam(params.pricing),
+            provider: getSearchParam(params.provider),
+            query: getSearchParam(params.q),
+            risk: getSearchParam(params.risk),
+            sortKey: getSearchParam(params.sort),
+          }}
+          relays={relays}
+        />
       </div>
     </SiteShell>
   );
+}
+
+function getSearchParam(value: string | string[] | undefined) {
+  return Array.isArray(value) ? (value[0] ?? "") : (value ?? "");
 }

@@ -92,6 +92,13 @@ test("relays page displays risk and referral metadata", async ({ page }) => {
   await expect(page.getByRole("link", { name: "Crazyrouter" })).toBeVisible();
   await expect(page.getByRole("link", { name: "302.AI" })).not.toBeVisible();
   await expect(page).toHaveURL(/provider=xAI/);
+  await page.getByLabel("Provider").selectOption("all");
+  await page.getByLabel("Relationship").selectOption("referral");
+  await expect(page.getByRole("link", { name: "302.AI" })).toBeVisible();
+  await expect(
+    page.getByRole("link", { name: "OpenRouter" }),
+  ).not.toBeVisible();
+  await expect(page).toHaveURL(/relationship=referral/);
   await page.getByRole("button", { name: "Reset filters" }).click();
   await expect(page).toHaveURL(/\/relays$/);
   await page.getByRole("link", { name: "OpenRouter" }).click();
@@ -102,7 +109,9 @@ test("relays page displays risk and referral metadata", async ({ page }) => {
 });
 
 test("relays page restores filters from URL", async ({ page }) => {
-  await page.goto("/relays?payment=Alipay&provider=OpenAI");
+  await page.goto(
+    "/relays?payment=Alipay&provider=OpenAI&relationship=referral",
+  );
 
   await expect(page.getByRole("link", { name: "302.AI" })).toBeVisible();
   await expect(
@@ -110,6 +119,7 @@ test("relays page restores filters from URL", async ({ page }) => {
   ).not.toBeVisible();
   await expect(page.getByLabel("Payment")).toHaveValue("Alipay");
   await expect(page.getByLabel("Provider")).toHaveValue("OpenAI");
+  await expect(page.getByLabel("Relationship")).toHaveValue("referral");
 });
 
 test("guides page links to a useful guide detail", async ({ page }) => {

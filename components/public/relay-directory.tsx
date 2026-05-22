@@ -10,6 +10,7 @@ import { formatDate } from "@/lib/formatters/number";
 
 type RiskFilter = "all" | "unknown" | "low" | "medium" | "high";
 type PricingFilter = "all" | "public" | "unclear";
+type RelationshipFilter = "all" | "sponsored" | "referral" | "verified";
 type SortKey = "name" | "last-checked" | "top-up";
 
 type Props = {
@@ -18,6 +19,7 @@ type Props = {
     pricing: string;
     provider: string;
     query: string;
+    relationship: string;
     risk: string;
     sortKey: string;
   };
@@ -59,6 +61,9 @@ export function RelayDirectory({ initialFilters, relays }: Props) {
   const [pricing, setPricing] = useState<PricingFilter>(
     normalizePricingFilter(initialFilters?.pricing),
   );
+  const [relationship, setRelationship] = useState<RelationshipFilter>(
+    normalizeRelationshipFilter(initialFilters?.relationship),
+  );
   const [sortKey, setSortKey] = useState<SortKey>(
     normalizeRelaySortKey(initialFilters?.sortKey),
   );
@@ -68,6 +73,7 @@ export function RelayDirectory({ initialFilters, relays }: Props) {
     paymentMethod !== "all" ||
     provider !== "all" ||
     pricing !== "all" ||
+    relationship !== "all" ||
     sortKey !== "name";
 
   useEffect(() => {
@@ -81,9 +87,14 @@ export function RelayDirectory({ initialFilters, relays }: Props) {
     );
     setQueryParam(params, "provider", provider === "all" ? "" : provider);
     setQueryParam(params, "pricing", pricing === "all" ? "" : pricing);
+    setQueryParam(
+      params,
+      "relationship",
+      relationship === "all" ? "" : relationship,
+    );
     setQueryParam(params, "sort", sortKey === "name" ? "" : sortKey);
     replaceCurrentQuery(params);
-  }, [paymentMethod, pricing, provider, query, risk, sortKey]);
+  }, [paymentMethod, pricing, provider, query, relationship, risk, sortKey]);
 
   const filteredRelays = useMemo(() => {
     const normalizedQuery = query.trim().toLowerCase();
@@ -111,13 +122,19 @@ export function RelayDirectory({ initialFilters, relays }: Props) {
           pricing === "all" ||
           (pricing === "public" && relay.hasPublicPricing) ||
           (pricing === "unclear" && !relay.hasPublicPricing);
+        const matchesRelationship =
+          relationship === "all" ||
+          (relationship === "sponsored" && relay.isSponsored) ||
+          (relationship === "referral" && relay.hasReferralProgram) ||
+          (relationship === "verified" && relay.isVerified);
 
         return (
           matchesQuery &&
           matchesRisk &&
           matchesPayment &&
           matchesProvider &&
-          matchesPricing
+          matchesPricing &&
+          matchesRelationship
         );
       })
       .sort((left, right) => {
@@ -134,12 +151,21 @@ export function RelayDirectory({ initialFilters, relays }: Props) {
 
         return left.name.localeCompare(right.name);
       });
-  }, [paymentMethod, pricing, provider, query, relays, risk, sortKey]);
+  }, [
+    paymentMethod,
+    pricing,
+    provider,
+    query,
+    relays,
+    relationship,
+    risk,
+    sortKey,
+  ]);
 
   return (
     <div className="grid gap-4">
       <div className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
-        <div className="grid gap-3 lg:grid-cols-[minmax(220px,1fr)_140px_160px_160px_150px_140px]">
+        <div className="grid gap-3 lg:grid-cols-[minmax(220px,1fr)_140px_150px_150px_140px_150px_130px]">
           <label className="grid gap-1 text-sm">
             <span className="font-medium">Search</span>
             <input
@@ -209,6 +235,21 @@ export function RelayDirectory({ initialFilters, relays }: Props) {
             </select>
           </label>
           <label className="grid gap-1 text-sm">
+            <span className="font-medium">Relationship</span>
+            <select
+              className="rounded-md border border-slate-300 px-3 py-2"
+              value={relationship}
+              onChange={(event) =>
+                setRelationship(event.target.value as RelationshipFilter)
+              }
+            >
+              <option value="all">All relationships</option>
+              <option value="sponsored">Sponsored</option>
+              <option value="referral">Referral</option>
+              <option value="verified">Verified</option>
+            </select>
+          </label>
+          <label className="grid gap-1 text-sm">
             <span className="font-medium">Sort by</span>
             <select
               className="rounded-md border border-slate-300 px-3 py-2"
@@ -234,6 +275,7 @@ export function RelayDirectory({ initialFilters, relays }: Props) {
               setPaymentMethod("all");
               setProvider("all");
               setPricing("all");
+              setRelationship("all");
               setSortKey("name");
             }}
             type="button"
@@ -371,6 +413,17 @@ function isPricingFilter(value: string | null): value is PricingFilter {
   return value === "all" || value === "public" || value === "unclear";
 }
 
+function isRelationshipFilter(
+  value: string | null,
+): value is RelationshipFilter {
+  return (
+    value === "all" ||
+    value === "sponsored" ||
+    value === "referral" ||
+    value === "verified"
+  );
+}
+
 function isRelaySortKey(value: string | null): value is SortKey {
   return value === "name" || value === "last-checked" || value === "top-up";
 }
@@ -383,6 +436,11 @@ function normalizeRiskFilter(value: string | undefined) {
 function normalizePricingFilter(value: string | undefined) {
   const normalized = value ?? "";
   return isPricingFilter(normalized) ? normalized : "all";
+}
+
+function normalizeRelationshipFilter(value: string | undefined) {
+  const normalized = value ?? "";
+  return isRelationshipFilter(normalized) ? normalized : "all";
 }
 
 function normalizeRelaySortKey(value: string | undefined) {

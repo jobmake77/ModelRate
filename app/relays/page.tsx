@@ -41,6 +41,7 @@ export default async function RelayStationsPage({ searchParams }: PageProps) {
             pricing: getSearchParam(params.pricing),
             provider: getSearchParam(params.provider),
             query: getSearchParam(params.q),
+            relationship: getSearchParam(params.relationship),
             risk: getSearchParam(params.risk),
             sortKey: getSearchParam(params.sort),
           }}

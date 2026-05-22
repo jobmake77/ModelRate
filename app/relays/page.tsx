@@ -1,11 +1,7 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { SiteShell } from "@/components/layout/site-shell";
-import { TrackedOutboundLink } from "@/components/public/tracked-outbound-link";
-import { Badge } from "@/components/ui/badge";
-import { Card, CardBody } from "@/components/ui/card";
+import { RelayDirectory } from "@/components/public/relay-directory";
 import { getPublishedRelayStations } from "@/lib/data-access/relays";
-import { formatDate } from "@/lib/formatters/number";
 
 export const metadata: Metadata = {
   title: "AI 中转站目录",
@@ -30,97 +26,8 @@ export default async function RelayStationsPage() {
           </p>
         </div>
 
-        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-          {relays.map((relay) => (
-            <Card key={relay.slug}>
-              <CardBody className="space-y-4">
-                <div className="flex items-start justify-between gap-4">
-                  <div>
-                    <Link
-                      href={`/relays/${relay.slug}`}
-                      className="text-lg font-semibold hover:underline"
-                    >
-                      {relay.name}
-                    </Link>
-                    <p className="text-sm text-slate-500">{relay.domain}</p>
-                  </div>
-                  <RiskBadge riskLevel={relay.riskLevel} />
-                </div>
-
-                <p className="line-clamp-3 text-sm leading-6 text-slate-600">
-                  {relay.description}
-                </p>
-
-                <div className="flex flex-wrap gap-2">
-                  {relay.isSponsored ? (
-                    <Badge tone="amber">Sponsored</Badge>
-                  ) : null}
-                  {relay.hasReferralProgram ? (
-                    <Badge tone="blue">Referral</Badge>
-                  ) : null}
-                  {relay.isVerified ? (
-                    <Badge tone="green">Verified</Badge>
-                  ) : null}
-                  {relay.hasPublicPricing ? (
-                    <Badge tone="green">Public pricing</Badge>
-                  ) : (
-                    <Badge tone="amber">Pricing unclear</Badge>
-                  )}
-                </div>
-
-                <dl className="grid gap-2 text-sm">
-                  <div className="flex justify-between gap-4">
-                    <dt className="text-slate-500">支付方式</dt>
-                    <dd className="text-right">
-                      {relay.paymentMethods.join(", ")}
-                    </dd>
-                  </div>
-                  <div className="flex justify-between gap-4">
-                    <dt className="text-slate-500">起充</dt>
-                    <dd>
-                      {relay.minimumTopUpAmount
-                        ? `${relay.minimumTopUpCurrency} ${relay.minimumTopUpAmount}`
-                        : "Unknown"}
-                    </dd>
-                  </div>
-                  <div className="flex justify-between gap-4">
-                    <dt className="text-slate-500">Last checked</dt>
-                    <dd>{formatDate(relay.lastCheckedAt)}</dd>
-                  </div>
-                </dl>
-
-                <div className="flex gap-3 text-sm font-medium">
-                  <Link
-                    className="text-blue-700 hover:underline"
-                    href={`/relays/${relay.slug}`}
-                  >
-                    查看详情
-                  </Link>
-                  <TrackedOutboundLink
-                    className="text-slate-700 hover:underline"
-                    sourcePath="/relays"
-                    targetSlug={relay.slug}
-                    targetType="relay"
-                    url={relay.websiteUrl}
-                  >
-                    访问官网
-                  </TrackedOutboundLink>
-                </div>
-              </CardBody>
-            </Card>
-          ))}
-        </div>
+        <RelayDirectory relays={relays} />
       </div>
     </SiteShell>
   );
-}
-
-function RiskBadge({
-  riskLevel,
-}: {
-  riskLevel: "unknown" | "low" | "medium" | "high";
-}) {
-  const tone =
-    riskLevel === "low" ? "green" : riskLevel === "high" ? "amber" : "slate";
-  return <Badge tone={tone}>Risk: {riskLevel}</Badge>;
 }

@@ -21,6 +21,12 @@ test("models page displays source and last checked metadata", async ({
   await expect(page.getByRole("heading", { name: "模型价格表" })).toBeVisible();
   await expect(page.getByText("GPT-4o mini")).toBeVisible();
   await expect(page.getByText(/Checked/).first()).toBeVisible();
+  await page.getByLabel("Provider").selectOption("Anthropic");
+  await expect(page.getByText("Claude Sonnet 4.5")).toBeVisible();
+  await expect(page.getByText("GPT-4o mini")).not.toBeVisible();
+  await page.getByLabel("Provider").selectOption("all");
+  await page.getByLabel("Search").fill("gpt-4o");
+  await expect(page.getByText("GPT-4o mini")).toBeVisible();
 });
 
 test("model detail links maintained relay pricing", async ({ page }) => {
@@ -63,6 +69,12 @@ test("relays page displays risk and referral metadata", async ({ page }) => {
   ).toBeVisible();
   await expect(page.getByRole("link", { name: "OpenRouter" })).toBeVisible();
   await expect(page.getByText(/Risk:/).first()).toBeVisible();
+  await page.getByLabel("Payment").selectOption("Alipay");
+  await expect(page.getByRole("link", { name: "302.AI" })).toBeVisible();
+  await expect(
+    page.getByRole("link", { name: "OpenRouter" }),
+  ).not.toBeVisible();
+  await page.getByLabel("Payment").selectOption("all");
   await page.getByRole("link", { name: "OpenRouter" }).click();
   await expect(page.getByRole("heading", { name: "OpenRouter" })).toBeVisible();
   await expect(page.getByText("风险和商业关系")).toBeVisible();

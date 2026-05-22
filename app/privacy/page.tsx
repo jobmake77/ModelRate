@@ -1,11 +1,13 @@
 import type { Metadata } from "next";
 import { SiteShell } from "@/components/layout/site-shell";
+import { createPublicMetadata } from "@/lib/seo/metadata";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = createPublicMetadata({
   title: "Privacy Policy",
   description:
     "ModelRate privacy policy for analytics, cookies and future affiliate tracking.",
-};
+  path: "/privacy",
+});
 
 export default function PrivacyPage() {
   return (

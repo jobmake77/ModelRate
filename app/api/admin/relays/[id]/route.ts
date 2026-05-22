@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { requireAdmin } from "@/lib/auth/admin";
+import { getAdminAuthErrorStatus, requireAdminRole } from "@/lib/auth/admin";
 import { getPrisma, hasDatabaseUrl } from "@/lib/db/client";
 import { urlSchema } from "@/lib/validation/common";
 
@@ -33,7 +33,7 @@ export async function PATCH(
   context: { params: Promise<{ id: string }> },
 ) {
   try {
-    await requireAdmin();
+    await requireAdminRole(["owner", "admin"]);
 
     if (!hasDatabaseUrl) {
       return NextResponse.json(
@@ -60,7 +60,7 @@ export async function PATCH(
 
     return NextResponse.json(
       { error: error instanceof Error ? error.message : "Unable to update" },
-      { status: 401 },
+      { status: getAdminAuthErrorStatus(error) },
     );
   }
 }
@@ -70,7 +70,7 @@ export async function DELETE(
   context: { params: Promise<{ id: string }> },
 ) {
   try {
-    await requireAdmin();
+    await requireAdminRole(["owner", "admin"]);
 
     if (!hasDatabaseUrl) {
       return NextResponse.json(
@@ -89,7 +89,7 @@ export async function DELETE(
   } catch (error) {
     return NextResponse.json(
       { error: error instanceof Error ? error.message : "Unable to hide" },
-      { status: 401 },
+      { status: getAdminAuthErrorStatus(error) },
     );
   }
 }

@@ -1,13 +1,17 @@
 import type { Metadata } from "next";
 import { SiteShell } from "@/components/layout/site-shell";
 import { RelayDirectory } from "@/components/public/relay-directory";
+import { JsonLd } from "@/components/seo/json-ld";
 import { getPublishedRelayStations } from "@/lib/data-access/relays";
+import { createPublicMetadata } from "@/lib/seo/metadata";
+import { itemListJsonLd } from "@/lib/seo/json-ld";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = createPublicMetadata({
   title: "AI 中转站目录",
   description:
     "浏览 AI API 中转站候选、支付方式、起充金额、风险标签和数据来源。",
-};
+  path: "/relays",
+});
 
 type SearchParams = Record<string, string | string[] | undefined>;
 
@@ -23,6 +27,16 @@ export default async function RelayStationsPage({ searchParams }: PageProps) {
 
   return (
     <SiteShell>
+      <JsonLd
+        data={itemListJsonLd({
+          name: "AI API relay stations",
+          path: "/relays",
+          items: relays.map((relay) => ({
+            name: relay.name,
+            path: `/relays/${relay.slug}`,
+          })),
+        })}
+      />
       <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
         <div className="mb-6">
           <p className="text-sm font-medium text-blue-700">Relay stations</p>

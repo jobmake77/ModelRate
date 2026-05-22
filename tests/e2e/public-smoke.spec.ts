@@ -11,6 +11,13 @@ test("home page renders calculator and model pricing", async ({ page }) => {
   await expect(
     page.getByRole("link", { name: "查看完整模型价格表" }),
   ).toBeVisible();
+  await expect(page.locator('link[rel="canonical"]')).toHaveAttribute(
+    "href",
+    "http://localhost:3000",
+  );
+  await expect(
+    page.locator('script[type="application/ld+json"]').first(),
+  ).toBeAttached();
 });
 
 test("models page displays source and last checked metadata", async ({
@@ -143,6 +150,7 @@ test("robots and sitemap expose public URLs and block admin", async ({
   page,
 }) => {
   const robots = await page.goto("/robots.txt");
+  expect(robots?.headers()["x-frame-options"]).toBe("DENY");
   expect(await robots?.text()).toContain("Disallow: /admin");
 
   const sitemap = await page.goto("/sitemap.xml");
@@ -154,13 +162,16 @@ test("robots and sitemap expose public URLs and block admin", async ({
 test("contact page exposes submission form and API accepts pending feedback", async ({
   page,
   request,
-}) => {
+}, testInfo) => {
   await page.goto("/contact");
 
   await expect(page.getByRole("heading", { name: "Contact" })).toBeVisible();
   await expect(page.getByRole("button", { name: "提交" })).toBeVisible();
 
   const response = await request.post("/api/submissions", {
+    headers: {
+      "x-forwarded-for": `e2e-${testInfo.project.name}-${Date.now()}`,
+    },
     data: {
       type: "price_correction",
       submitterEmail: "tester@example.com",
@@ -215,6 +226,9 @@ test("admin dashboard is reachable in local bootstrap mode", async ({
   await expect(page.getByRole("link", { name: "Models" })).toBeVisible();
   await expect(page.getByText("Relay stations")).toBeVisible();
   await expect(page.getByText("Pending submissions")).toBeVisible();
+  await expect(
+    page.getByRole("heading", { name: "Data Quality" }),
+  ).toBeVisible();
 });
 
 test("admin ad placements page is reachable and disabled by default", async ({
@@ -263,4 +277,20 @@ test("admin guides page is reachable in local bootstrap mode", async ({
   await expect(
     page.getByText("/guides/how-to-calculate-ai-token-cost"),
   ).toBeVisible();
+});
+
+test("admin users page is owner-only and reachable in local bootstrap mode", async ({
+  page,
+}) => {
+  await page.goto("/admin/users");
+
+  await expect(
+    page.getByRole("heading", { name: "Admin Users" }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("heading", { name: "admin@example.com" }),
+  ).toBeVisible();
+  await expect(page.getByRole("textbox", { name: "Name" }).nth(1)).toHaveValue(
+    "Development admin",
+  );
 });

@@ -1,11 +1,14 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { SiteShell } from "@/components/layout/site-shell";
+import { JsonLd } from "@/components/seo/json-ld";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardBody, CardHeader } from "@/components/ui/card";
 import { getModelBySlug } from "@/lib/data-access/models";
 import { getCurrentRelayPricesForModel } from "@/lib/data-access/relays";
 import { formatDate, formatNumber, formatUsd } from "@/lib/formatters/number";
+import { createPublicMetadata } from "@/lib/seo/metadata";
+import { softwareApplicationJsonLd } from "@/lib/seo/json-ld";
 
 type Props = {
   params: Promise<{ slug: string }>;
@@ -19,10 +22,11 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     return { title: "Model not found" };
   }
 
-  return {
+  return createPublicMetadata({
     title: `${model.displayName} 价格`,
     description: `${model.displayName} API 输入和输出价格、上下文长度、能力标签和数据来源。`,
-  };
+    path: `/models/${model.slug}`,
+  });
 }
 
 export default async function ModelDetailPage({ params }: Props) {
@@ -38,6 +42,13 @@ export default async function ModelDetailPage({ params }: Props) {
 
   return (
     <SiteShell>
+      <JsonLd
+        data={softwareApplicationJsonLd({
+          name: model.displayName,
+          description: model.description,
+          path: `/models/${model.slug}`,
+        })}
+      />
       <div className="mx-auto max-w-5xl px-4 py-8 sm:px-6 lg:px-8">
         <div className="mb-6">
           <p className="text-sm font-medium text-blue-700">

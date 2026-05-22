@@ -1,9 +1,12 @@
 import { PrismaClient } from "@prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
+import { assertProductionEnv } from "@/lib/env";
 
 const globalForPrisma = globalThis as unknown as {
   prisma?: PrismaClient;
 };
+
+assertProductionEnv();
 
 export const hasDatabaseUrl = Boolean(process.env.DATABASE_URL);
 

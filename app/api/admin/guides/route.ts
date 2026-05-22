@@ -1,6 +1,10 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { requireAdmin } from "@/lib/auth/admin";
+import {
+  getAdminAuthErrorStatus,
+  requireAdmin,
+  requireAdminRole,
+} from "@/lib/auth/admin";
 import { getPrisma, hasDatabaseUrl } from "@/lib/db/client";
 import { slugSchema } from "@/lib/validation/common";
 
@@ -42,11 +46,7 @@ export async function GET() {
 
 export async function POST(request: Request) {
   try {
-    const admin = await requireAdmin();
-
-    if (!["owner", "admin", "editor"].includes(admin.role)) {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-    }
+    await requireAdminRole(["owner", "admin", "editor"]);
 
     if (!hasDatabaseUrl) {
       return NextResponse.json(
@@ -77,7 +77,7 @@ export async function POST(request: Request) {
 
     return NextResponse.json(
       { error: error instanceof Error ? error.message : "Unable to create" },
-      { status: 401 },
+      { status: getAdminAuthErrorStatus(error) },
     );
   }
 }

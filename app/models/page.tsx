@@ -1,12 +1,16 @@
 import type { Metadata } from "next";
 import { SiteShell } from "@/components/layout/site-shell";
 import { ModelPriceTable } from "@/components/public/model-price-table";
+import { JsonLd } from "@/components/seo/json-ld";
 import { getModelsWithCurrentPrices } from "@/lib/data-access/models";
+import { createPublicMetadata } from "@/lib/seo/metadata";
+import { itemListJsonLd } from "@/lib/seo/json-ld";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = createPublicMetadata({
   title: "模型价格表",
   description: "按统一 USD per 1M tokens 口径浏览主流 AI 模型输入和输出价格。",
-};
+  path: "/models",
+});
 
 type SearchParams = Record<string, string | string[] | undefined>;
 
@@ -22,6 +26,16 @@ export default async function ModelsPage({ searchParams }: PageProps) {
 
   return (
     <SiteShell>
+      <JsonLd
+        data={itemListJsonLd({
+          name: "AI model pricing",
+          path: "/models",
+          items: models.map((model) => ({
+            name: model.displayName,
+            path: `/models/${model.slug}`,
+          })),
+        })}
+      />
       <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
         <div className="mb-6">
           <p className="text-sm font-medium text-blue-700">Model pricing</p>

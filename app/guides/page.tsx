@@ -1,22 +1,36 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { SiteShell } from "@/components/layout/site-shell";
+import { JsonLd } from "@/components/seo/json-ld";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardBody } from "@/components/ui/card";
 import { getPublishedGuides } from "@/lib/data-access/guides";
 import { formatDate } from "@/lib/formatters/number";
+import { createPublicMetadata } from "@/lib/seo/metadata";
+import { itemListJsonLd } from "@/lib/seo/json-ld";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = createPublicMetadata({
   title: "AI API 成本与中转站指南",
   description:
     "阅读 AI API Token 成本、One-API 倍率、中转站风险和模型价格数据来源的实用指南。",
-};
+  path: "/guides",
+});
 
 export default async function GuidesPage() {
   const guides = await getPublishedGuides();
 
   return (
     <SiteShell>
+      <JsonLd
+        data={itemListJsonLd({
+          name: "AI API cost guides",
+          path: "/guides",
+          items: guides.map((guide) => ({
+            name: guide.title,
+            path: `/guides/${guide.slug}`,
+          })),
+        })}
+      />
       <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
         <div className="mb-6">
           <p className="text-sm font-medium text-blue-700">Guides</p>

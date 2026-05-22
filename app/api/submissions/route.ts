@@ -1,6 +1,13 @@
+import { headers } from "next/headers";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { getPrisma, hasDatabaseUrl } from "@/lib/db/client";
+import {
+  checkRateLimit,
+  getClientIp,
+  hashIp,
+  requireJsonRequest,
+} from "@/lib/security/request";
 import { urlSchema } from "@/lib/validation/common";
 
 const submissionSchema = z.object({
@@ -12,6 +19,7 @@ const submissionSchema = z.object({
   ]),
   submitterName: z.string().trim().max(120).optional(),
   submitterEmail: z.string().trim().email().max(255).optional(),
+  companyWebsite: z.string().trim().max(500).optional(),
   payload: z.object({
     subject: z.string().trim().min(3).max(160),
     message: z.string().trim().min(10).max(4000),
@@ -25,7 +33,45 @@ const submissionSchema = z.object({
 
 export async function POST(request: Request) {
   try {
+    if (!requireJsonRequest(request)) {
+      return NextResponse.json(
+        { error: "Content-Type must be application/json" },
+        { status: 415 },
+      );
+    }
+
+    const headerStore = await headers();
+    const ipHash = hashIp(getClientIp(headerStore)) ?? "anonymous";
+    const rateLimit = checkRateLimit({
+      key: `submission:${ipHash}`,
+      limit: 5,
+      windowMs: 10 * 60 * 1000,
+    });
+
+    if (!rateLimit.allowed) {
+      return NextResponse.json(
+        { error: "Too many submissions. Try again later." },
+        {
+          status: 429,
+          headers: {
+            "Retry-After": String(rateLimit.retryAfterSeconds),
+          },
+        },
+      );
+    }
+
     const input = submissionSchema.parse(await request.json());
+
+    if (input.companyWebsite?.trim()) {
+      return NextResponse.json(
+        {
+          accepted: true,
+          persisted: false,
+          status: "pending",
+        },
+        { status: 202 },
+      );
+    }
 
     if (!hasDatabaseUrl) {
       return NextResponse.json(
@@ -61,6 +107,10 @@ export async function POST(request: Request) {
         { error: "Invalid input", issues: error.issues },
         { status: 400 },
       );
+    }
+
+    if (error instanceof SyntaxError) {
+      return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
     }
 
     return NextResponse.json(

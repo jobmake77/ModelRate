@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { requireAdmin } from "@/lib/auth/admin";
+import { getAdminAuthErrorStatus, requireAdminRole } from "@/lib/auth/admin";
 import { getPrisma, hasDatabaseUrl } from "@/lib/db/client";
 
 const reviewSchema = z.object({
@@ -13,11 +13,7 @@ export async function PATCH(
   context: { params: Promise<{ id: string }> },
 ) {
   try {
-    const admin = await requireAdmin();
-
-    if (!["owner", "admin"].includes(admin.role)) {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-    }
+    await requireAdminRole(["owner", "admin"]);
 
     if (!hasDatabaseUrl) {
       return NextResponse.json(
@@ -63,7 +59,7 @@ export async function PATCH(
 
     return NextResponse.json(
       { error: error instanceof Error ? error.message : "Unable to review" },
-      { status: 401 },
+      { status: getAdminAuthErrorStatus(error) },
     );
   }
 }

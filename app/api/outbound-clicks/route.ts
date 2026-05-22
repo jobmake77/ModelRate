@@ -1,9 +1,14 @@
-import { createHash } from "node:crypto";
 import { headers } from "next/headers";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { getPrisma, hasDatabaseUrl } from "@/lib/db/client";
 import { getRelayStationBySlug } from "@/lib/data-access/relays";
+import {
+  checkRateLimit,
+  getClientIp,
+  hashIp,
+  requireJsonRequest,
+} from "@/lib/security/request";
 import { urlSchema } from "@/lib/validation/common";
 
 const outboundClickSchema = z.object({
@@ -18,11 +23,38 @@ const outboundClickSchema = z.object({
 
 export async function POST(request: Request) {
   try {
+    if (!requireJsonRequest(request)) {
+      return NextResponse.json(
+        { error: "Content-Type must be application/json" },
+        { status: 415 },
+      );
+    }
+
     const input = outboundClickSchema.parse(await request.json());
     const allowed = await isAllowedOutboundTarget(input);
 
     if (!allowed.ok) {
       return NextResponse.json({ error: allowed.error }, { status: 400 });
+    }
+
+    const headerStore = await headers();
+    const ipHash = hashIp(getClientIp(headerStore));
+    const rateLimit = checkRateLimit({
+      key: `outbound:${ipHash ?? "anonymous"}:${input.targetSlug ?? "none"}`,
+      limit: 30,
+      windowMs: 60 * 1000,
+    });
+
+    if (!rateLimit.allowed) {
+      return NextResponse.json(
+        { error: "Too many outbound clicks. Try again later." },
+        {
+          status: 429,
+          headers: {
+            "Retry-After": String(rateLimit.retryAfterSeconds),
+          },
+        },
+      );
     }
 
     if (!hasDatabaseUrl) {
@@ -35,13 +67,6 @@ export async function POST(request: Request) {
         { status: 202 },
       );
     }
-
-    const headerStore = await headers();
-    const ipHash = hashIp(
-      headerStore.get("x-forwarded-for")?.split(",")[0]?.trim() ??
-        headerStore.get("x-real-ip") ??
-        "",
-    );
 
     await getPrisma().outboundClick.create({
       data: {
@@ -67,6 +92,10 @@ export async function POST(request: Request) {
       );
     }
 
+    if (error instanceof SyntaxError) {
+      return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
+    }
+
     return NextResponse.json(
       { error: "Unable to record outbound click" },
       { status: 500 },
@@ -80,7 +109,7 @@ async function isAllowedOutboundTarget(input: {
   url: string;
 }): Promise<{ ok: true; targetId?: string } | { ok: false; error: string }> {
   if (input.targetType !== "relay") {
-    return { ok: true };
+    return { ok: false, error: "Only relay outbound clicks are supported." };
   }
 
   if (!input.targetSlug) {
@@ -100,14 +129,4 @@ async function isAllowedOutboundTarget(input: {
   }
 
   return { ok: true };
-}
-
-function hashIp(ip: string) {
-  if (!ip) {
-    return null;
-  }
-
-  return createHash("sha256")
-    .update(`${process.env.CLICK_HASH_SALT ?? "modelrate-local"}:${ip}`)
-    .digest("hex");
 }

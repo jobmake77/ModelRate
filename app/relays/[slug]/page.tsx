@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { SiteShell } from "@/components/layout/site-shell";
 import { TrackedOutboundLink } from "@/components/public/tracked-outbound-link";
+import { JsonLd } from "@/components/seo/json-ld";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardBody, CardHeader } from "@/components/ui/card";
 import {
@@ -9,6 +10,8 @@ import {
   getRelayStationBySlug,
 } from "@/lib/data-access/relays";
 import { formatDate, formatUsd } from "@/lib/formatters/number";
+import { createPublicMetadata } from "@/lib/seo/metadata";
+import { organizationPageJsonLd } from "@/lib/seo/json-ld";
 
 type Props = {
   params: Promise<{ slug: string }>;
@@ -22,10 +25,11 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     return { title: "Relay station not found" };
   }
 
-  return {
+  return createPublicMetadata({
     title: `${relay.name} 中转站信息`,
     description: `${relay.name} 的支付方式、起充金额、支持模型、风险标签和数据来源。`,
-  };
+    path: `/relays/${relay.slug}`,
+  });
 }
 
 export default async function RelayStationDetailPage({ params }: Props) {
@@ -41,6 +45,14 @@ export default async function RelayStationDetailPage({ params }: Props) {
 
   return (
     <SiteShell>
+      <JsonLd
+        data={organizationPageJsonLd({
+          name: relay.name,
+          description: relay.description,
+          path: `/relays/${relay.slug}`,
+          websiteUrl: relay.websiteUrl,
+        })}
+      />
       <div className="mx-auto max-w-5xl px-4 py-8 sm:px-6 lg:px-8">
         <div className="mb-6">
           <p className="text-sm font-medium text-blue-700">{relay.domain}</p>

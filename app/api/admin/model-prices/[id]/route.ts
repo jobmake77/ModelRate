@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { requireAdmin } from "@/lib/auth/admin";
+import { getAdminAuthErrorStatus, requireAdminRole } from "@/lib/auth/admin";
 import { getPrisma, hasDatabaseUrl } from "@/lib/db/client";
 import { currentPriceSchema } from "@/lib/validation/common";
 
@@ -26,7 +26,7 @@ export async function PATCH(
   context: { params: Promise<{ id: string }> },
 ) {
   try {
-    await requireAdmin();
+    await requireAdminRole(["owner", "admin"]);
 
     if (!hasDatabaseUrl) {
       return NextResponse.json(
@@ -39,12 +39,16 @@ export async function PATCH(
     const input = priceUpdateSchema.parse(await request.json());
     const prisma = getPrisma();
 
-    if (input.isCurrent && input.modelId && input.sourceType) {
+    if (input.isCurrent) {
+      const existing = await prisma.modelPrice.findUniqueOrThrow({
+        where: { id },
+        select: { modelId: true },
+      });
+
       await prisma.modelPrice.updateMany({
         where: {
           id: { not: id },
-          modelId: input.modelId,
-          sourceType: input.sourceType,
+          modelId: input.modelId ?? existing.modelId,
           isCurrent: true,
         },
         data: { isCurrent: false },
@@ -68,7 +72,7 @@ export async function PATCH(
 
     return NextResponse.json(
       { error: error instanceof Error ? error.message : "Unable to update" },
-      { status: 401 },
+      { status: getAdminAuthErrorStatus(error) },
     );
   }
 }
@@ -78,7 +82,7 @@ export async function DELETE(
   context: { params: Promise<{ id: string }> },
 ) {
   try {
-    await requireAdmin();
+    await requireAdminRole(["owner", "admin"]);
 
     if (!hasDatabaseUrl) {
       return NextResponse.json(
@@ -98,7 +102,7 @@ export async function DELETE(
   } catch (error) {
     return NextResponse.json(
       { error: error instanceof Error ? error.message : "Unable to archive" },
-      { status: 401 },
+      { status: getAdminAuthErrorStatus(error) },
     );
   }
 }

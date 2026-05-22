@@ -1,12 +1,14 @@
 import type { Metadata } from "next";
 import { SiteShell } from "@/components/layout/site-shell";
 import { SubmissionForm } from "@/components/public/submission-form";
+import { createPublicMetadata } from "@/lib/seo/metadata";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = createPublicMetadata({
   title: "Contact",
   description:
     "Contact ModelRate for data corrections, relay submissions and partnerships.",
-};
+  path: "/contact",
+});
 
 export default function ContactPage() {
   return (

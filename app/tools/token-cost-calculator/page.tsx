@@ -1,17 +1,21 @@
 import type { Metadata } from "next";
 import { SiteShell } from "@/components/layout/site-shell";
 import { TokenCostCalculator } from "@/components/calculators/token-cost-calculator";
+import { JsonLd } from "@/components/seo/json-ld";
 import { Card, CardBody, CardHeader } from "@/components/ui/card";
 import {
   getLatestUsdCnyRate,
   getModelsWithCurrentPrices,
 } from "@/lib/data-access/models";
+import { createPublicMetadata } from "@/lib/seo/metadata";
+import { webApplicationJsonLd } from "@/lib/seo/json-ld";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = createPublicMetadata({
   title: "Token 成本计算器",
   description:
     "输入模型、Token 数和请求次数，估算 AI API 的 USD 和人民币调用成本。",
-};
+  path: "/tools/token-cost-calculator",
+});
 
 export default async function TokenCostCalculatorPage() {
   const [models, exchangeRate] = await Promise.all([
@@ -21,6 +25,14 @@ export default async function TokenCostCalculatorPage() {
 
   return (
     <SiteShell>
+      <JsonLd
+        data={webApplicationJsonLd({
+          name: "Token 成本计算器",
+          description:
+            "输入模型、Token 数和请求次数，估算 AI API 的 USD 和人民币调用成本。",
+          path: "/tools/token-cost-calculator",
+        })}
+      />
       <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6 lg:px-8">
         <div className="mb-6">
           <p className="text-sm font-medium text-blue-700">Calculator</p>

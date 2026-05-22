@@ -91,6 +91,18 @@ async function main() {
   }
 
   for (const rate of exchangeRates) {
+    const fetchedAt = new Date(rate.fetchedAt);
+
+    await prisma.exchangeRate.deleteMany({
+      where: {
+        baseCurrency: rate.baseCurrency,
+        quoteCurrency: rate.quoteCurrency,
+        sourceName: rate.sourceName,
+        sourceUrl: rate.sourceUrl,
+        fetchedAt,
+      },
+    });
+
     await prisma.exchangeRate.create({
       data: {
         baseCurrency: rate.baseCurrency,
@@ -98,7 +110,7 @@ async function main() {
         rate: rate.rate,
         sourceName: rate.sourceName,
         sourceUrl: rate.sourceUrl,
-        fetchedAt: new Date(rate.fetchedAt),
+        fetchedAt,
       },
     });
   }

@@ -1,5 +1,10 @@
+import Link from "next/link";
 import { getCurrentAdmin } from "@/lib/auth/admin";
 import { getAdminAdPlacements } from "@/lib/data-access/ad-placements";
+import {
+  getDataQualitySummary,
+  type DataQualityItem,
+} from "@/lib/data-access/data-quality";
 import { getAdminGuides } from "@/lib/data-access/guides";
 import { getModelsWithCurrentPrices } from "@/lib/data-access/models";
 import { getAdminRelayStations } from "@/lib/data-access/relays";
@@ -20,13 +25,14 @@ export default async function AdminPage() {
     );
   }
 
-  const [models, relays, guides, adPlacements, pendingSubmissions] =
+  const [models, relays, guides, adPlacements, pendingSubmissions, quality] =
     await Promise.all([
       getModelsWithCurrentPrices(),
       getAdminRelayStations(),
       getAdminGuides(),
       getAdminAdPlacements(),
       getPendingSubmissionCount(),
+      getDataQualitySummary(),
     ]);
   const pricedModels = models.filter((model) => model.currentPrice);
   const publishedRelays = relays.filter(
@@ -77,6 +83,20 @@ export default async function AdminPage() {
         当前后台已覆盖模型、模型价格、中转站、中转站价格、指南、投稿审核和广告位配置。
         生产环境请先配置 Supabase Auth、数据库和管理员账号。
       </div>
+
+      <section className="mt-6">
+        <div className="mb-3">
+          <h2 className="text-xl font-semibold">Data Quality</h2>
+          <p className="mt-1 text-sm text-slate-600">
+            上线前优先处理非零项，避免公开页面展示过期、缺来源或缺复核时间的数据。
+          </p>
+        </div>
+        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+          {quality.map((item) => (
+            <QualityMetric item={item} key={item.label} />
+          ))}
+        </div>
+      </section>
     </div>
   );
 }
@@ -104,5 +124,23 @@ function Metric({
       <div className="mt-2 text-3xl font-semibold">{value}</div>
       <div className="mt-2 text-xs text-slate-500">{detail}</div>
     </div>
+  );
+}
+
+function QualityMetric({ item }: { item: DataQualityItem }) {
+  const toneClass =
+    item.tone === "amber"
+      ? "border-amber-200 bg-amber-50 text-amber-950"
+      : "border-green-200 bg-green-50 text-green-950";
+
+  return (
+    <Link
+      className={`rounded-lg border p-5 shadow-sm transition hover:shadow-md ${toneClass}`}
+      href={item.href}
+    >
+      <div className="text-sm">{item.label}</div>
+      <div className="mt-2 text-3xl font-semibold">{item.value}</div>
+      <div className="mt-2 text-xs opacity-80">{item.detail}</div>
+    </Link>
   );
 }

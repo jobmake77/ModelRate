@@ -1,8 +1,10 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { Calculator, Database, ShieldCheck } from "lucide-react";
 import { SiteShell } from "@/components/layout/site-shell";
 import { TokenCostCalculator } from "@/components/calculators/token-cost-calculator";
 import { AdSlot } from "@/components/public/ad-slot";
+import { JsonLd } from "@/components/seo/json-ld";
 import { Card, CardBody, CardHeader } from "@/components/ui/card";
 import {
   getLatestUsdCnyRate,
@@ -11,6 +13,15 @@ import {
 import { getPublishedGuides } from "@/lib/data-access/guides";
 import { getPublishedRelayStations } from "@/lib/data-access/relays";
 import { formatUsd } from "@/lib/formatters/number";
+import { createPublicMetadata } from "@/lib/seo/metadata";
+import { itemListJsonLd, webApplicationJsonLd } from "@/lib/seo/json-ld";
+
+export const metadata: Metadata = createPublicMetadata({
+  title: "ModelRate - AI API Cost & Multiplier Calculator",
+  description:
+    "用统一价格口径计算 AI API Token 成本、One-API 倍率，并浏览模型价格和中转站信息。",
+  path: "/",
+});
 
 export default async function Home() {
   const [models, exchangeRate, relays, guides] = await Promise.all([
@@ -25,6 +36,24 @@ export default async function Home() {
 
   return (
     <SiteShell>
+      <JsonLd
+        data={[
+          webApplicationJsonLd({
+            name: "ModelRate Token Cost Calculator",
+            description:
+              "Calculate AI API token costs and compare model pricing by USD per 1M tokens.",
+            path: "/tools/token-cost-calculator",
+          }),
+          itemListJsonLd({
+            name: "Featured model prices",
+            path: "/models",
+            items: pricedModels.map((model) => ({
+              name: model.displayName,
+              path: `/models/${model.slug}`,
+            })),
+          }),
+        ]}
+      />
       <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
         <div className="grid gap-6 lg:grid-cols-[1.2fr_0.8fr]">
           <section className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">

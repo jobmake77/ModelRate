@@ -1,4 +1,5 @@
 import { getPrisma, hasDatabaseUrl } from "@/lib/db/client";
+import { canUseFixtureFallback } from "@/lib/env";
 import { models } from "@/lib/fixtures/model-data";
 import {
   relayModelPrices,
@@ -32,6 +33,10 @@ export async function getPublishedRelayStations(): Promise<
   RelayStationPublic[]
 > {
   if (!hasDatabaseUrl) {
+    if (!canUseFixtureFallback()) {
+      throw new Error("DATABASE_URL is required for production data access.");
+    }
+
     return getFixtureRelays();
   }
 
@@ -40,6 +45,14 @@ export async function getPublishedRelayStations(): Promise<
     const rows = await prisma.relayStation.findMany({
       where: { status: "published" },
       include: {
+        relayModelPrices: {
+          where: { isCurrent: true },
+          include: {
+            model: {
+              include: { provider: true },
+            },
+          },
+        },
         riskTags: {
           include: { riskTag: true },
         },
@@ -60,7 +73,7 @@ export async function getPublishedRelayStations(): Promise<
         : null,
       minimumTopUpCurrency: row.minimumTopUpCurrency,
       supportChannels: row.supportChannels,
-      supportedProviders: [],
+      supportedProviders: uniqueProviderNames(row.relayModelPrices),
       hasPublicPricing: row.hasPublicPricing,
       hasTrialCredit: row.hasTrialCredit,
       hasReferralProgram: row.hasReferralProgram,
@@ -80,7 +93,11 @@ export async function getPublishedRelayStations(): Promise<
       sourceUrl: row.websiteUrl,
       lastCheckedAt: row.lastCheckedAt?.toISOString() ?? "",
     }));
-  } catch {
+  } catch (error) {
+    if (!canUseFixtureFallback()) {
+      throw error;
+    }
+
     return getFixtureRelays();
   }
 }
@@ -94,6 +111,10 @@ export async function getCurrentRelayModelPrices(
   relaySlug: string,
 ): Promise<RelayModelPricePublic[]> {
   if (!hasDatabaseUrl) {
+    if (!canUseFixtureFallback()) {
+      throw new Error("DATABASE_URL is required for production data access.");
+    }
+
     return getFixtureRelayModelPrices(relaySlug);
   }
 
@@ -132,7 +153,11 @@ export async function getCurrentRelayModelPrices(
       isCurrent: row.isCurrent,
       notes: row.notes,
     }));
-  } catch {
+  } catch (error) {
+    if (!canUseFixtureFallback()) {
+      throw error;
+    }
+
     return getFixtureRelayModelPrices(relaySlug);
   }
 }
@@ -141,6 +166,10 @@ export async function getCurrentRelayPricesForModel(
   modelSlug: string,
 ): Promise<ModelRelayPricePublic[]> {
   if (!hasDatabaseUrl) {
+    if (!canUseFixtureFallback()) {
+      throw new Error("DATABASE_URL is required for production data access.");
+    }
+
     return getFixtureModelRelayPrices(modelSlug);
   }
 
@@ -186,13 +215,21 @@ export async function getCurrentRelayPricesForModel(
       isCurrent: row.isCurrent,
       notes: row.notes,
     }));
-  } catch {
+  } catch (error) {
+    if (!canUseFixtureFallback()) {
+      throw error;
+    }
+
     return getFixtureModelRelayPrices(modelSlug);
   }
 }
 
 export async function getAdminRelayStations(): Promise<AdminRelayRow[]> {
   if (!hasDatabaseUrl) {
+    if (!canUseFixtureFallback()) {
+      throw new Error("DATABASE_URL is required for production data access.");
+    }
+
     return relayStations.map((relay) => ({
       ...relay,
       id: relay.slug,
@@ -204,6 +241,14 @@ export async function getAdminRelayStations(): Promise<AdminRelayRow[]> {
 
   const rows = await getPrisma().relayStation.findMany({
     include: {
+      relayModelPrices: {
+        where: { isCurrent: true },
+        include: {
+          model: {
+            include: { provider: true },
+          },
+        },
+      },
       riskTags: {
         include: { riskTag: true },
       },
@@ -225,7 +270,7 @@ export async function getAdminRelayStations(): Promise<AdminRelayRow[]> {
       : null,
     minimumTopUpCurrency: row.minimumTopUpCurrency,
     supportChannels: row.supportChannels,
-    supportedProviders: [],
+    supportedProviders: uniqueProviderNames(row.relayModelPrices),
     hasPublicPricing: row.hasPublicPricing,
     hasTrialCredit: row.hasTrialCredit,
     hasReferralProgram: row.hasReferralProgram,
@@ -256,6 +301,14 @@ function getFixtureRelays(): RelayStationPublic[] {
         relay.riskTags.includes(tag.slug),
       ),
     }));
+}
+
+function uniqueProviderNames(
+  prices: Array<{ model: { provider: { name: string } } }>,
+) {
+  return Array.from(
+    new Set(prices.map((price) => price.model.provider.name)),
+  ).sort((left, right) => left.localeCompare(right));
 }
 
 function getFixtureRelayModelPrices(

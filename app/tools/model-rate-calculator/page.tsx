@@ -1,17 +1,29 @@
 import type { Metadata } from "next";
 import { ModelRateCalculator } from "@/components/calculators/model-rate-calculator";
 import { SiteShell } from "@/components/layout/site-shell";
+import { JsonLd } from "@/components/seo/json-ld";
 import { Card, CardBody, CardHeader } from "@/components/ui/card";
+import { createPublicMetadata } from "@/lib/seo/metadata";
+import { webApplicationJsonLd } from "@/lib/seo/json-ld";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = createPublicMetadata({
   title: "One-API 倍率计算器",
   description:
     "将模型输入和输出价格换算为 One-API / New API 的模型倍率、补全倍率、分组倍率和线路倍率。",
-};
+  path: "/tools/model-rate-calculator",
+});
 
 export default function ModelRateCalculatorPage() {
   return (
     <SiteShell>
+      <JsonLd
+        data={webApplicationJsonLd({
+          name: "One-API 倍率计算器",
+          description:
+            "将模型输入和输出价格换算为 One-API / New API 的模型倍率、补全倍率、分组倍率和线路倍率。",
+          path: "/tools/model-rate-calculator",
+        })}
+      />
       <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6 lg:px-8">
         <div className="mb-6">
           <p className="text-sm font-medium text-amber-700">Multiplier</p>

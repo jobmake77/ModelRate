@@ -2,8 +2,7 @@ import type { MetadataRoute } from "next";
 import { getPublishedGuides } from "@/lib/data-access/guides";
 import { getModelsWithCurrentPrices } from "@/lib/data-access/models";
 import { getPublishedRelayStations } from "@/lib/data-access/relays";
-
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
+import { getNormalizedSiteUrl } from "@/lib/seo/metadata";
 
 const staticPaths = [
   "/",
@@ -40,8 +39,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
 function entry(path: string, lastModified?: string): MetadataRoute.Sitemap[0] {
   return {
-    url: `${siteUrl}${path}`,
-    lastModified: lastModified ? new Date(lastModified) : new Date(),
+    url: `${getNormalizedSiteUrl()}${path}`,
+    lastModified: lastModified ? new Date(lastModified) : undefined,
     changeFrequency: path === "/" ? "daily" : "weekly",
     priority: path === "/" ? 1 : 0.7,
   };

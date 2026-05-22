@@ -2,9 +2,12 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { SiteShell } from "@/components/layout/site-shell";
+import { JsonLd } from "@/components/seo/json-ld";
 import { Badge } from "@/components/ui/badge";
 import { getGuideBySlug, getPublishedGuides } from "@/lib/data-access/guides";
 import { formatDate } from "@/lib/formatters/number";
+import { createPublicMetadata } from "@/lib/seo/metadata";
+import { articleJsonLd, breadcrumbJsonLd } from "@/lib/seo/json-ld";
 
 type Props = {
   params: Promise<{ slug: string }>;
@@ -18,10 +21,11 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     return {};
   }
 
-  return {
+  return createPublicMetadata({
     title: guide.seoTitle,
     description: guide.seoDescription,
-  };
+    path: `/guides/${guide.slug}`,
+  });
 }
 
 export async function generateStaticParams() {
@@ -39,6 +43,21 @@ export default async function GuideDetailPage({ params }: Props) {
 
   return (
     <SiteShell>
+      <JsonLd
+        data={[
+          articleJsonLd({
+            title: guide.title,
+            description: guide.description,
+            dateModified: guide.updatedAt,
+            path: `/guides/${guide.slug}`,
+          }),
+          breadcrumbJsonLd([
+            { name: "Home", path: "/" },
+            { name: "Guides", path: "/guides" },
+            { name: guide.title, path: `/guides/${guide.slug}` },
+          ]),
+        ]}
+      />
       <article className="mx-auto max-w-4xl px-4 py-8 sm:px-6 lg:px-8">
         <div className="mb-8">
           <Link className="text-sm font-medium text-blue-700" href="/guides">

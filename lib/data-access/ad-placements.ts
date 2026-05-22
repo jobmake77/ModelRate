@@ -1,4 +1,5 @@
 import { getPrisma, hasDatabaseUrl } from "@/lib/db/client";
+import { canUseFixtureFallback } from "@/lib/env";
 
 export type AdPlacementPublic = {
   slotKey: string;
@@ -33,6 +34,10 @@ const fixturePlacements: AdPlacementPublic[] = [
 
 export async function getAdPlacementBySlot(slotKey: string) {
   if (!hasDatabaseUrl) {
+    if (!canUseFixtureFallback()) {
+      throw new Error("DATABASE_URL is required for production data access.");
+    }
+
     return (
       fixturePlacements.find((placement) => placement.slotKey === slotKey) ??
       null
@@ -57,7 +62,11 @@ export async function getAdPlacementBySlot(slotKey: string) {
       adCode: placement.adCode,
       isEnabled: placement.isEnabled,
     };
-  } catch {
+  } catch (error) {
+    if (!canUseFixtureFallback()) {
+      throw error;
+    }
+
     return (
       fixturePlacements.find((placement) => placement.slotKey === slotKey) ??
       null
@@ -67,6 +76,10 @@ export async function getAdPlacementBySlot(slotKey: string) {
 
 export async function getAdminAdPlacements(): Promise<AdPlacementPublic[]> {
   if (!hasDatabaseUrl) {
+    if (!canUseFixtureFallback()) {
+      throw new Error("DATABASE_URL is required for production data access.");
+    }
+
     return fixturePlacements;
   }
 

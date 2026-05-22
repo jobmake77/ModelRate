@@ -33,6 +33,7 @@ export function SubmissionForm() {
         type,
         submitterName: stringValue(formData.get("submitterName")),
         submitterEmail: stringValue(formData.get("submitterEmail")),
+        companyWebsite: optionalStringValue(formData.get("companyWebsite")),
         payload: {
           subject: stringValue(formData.get("subject")),
           message: stringValue(formData.get("message")),
@@ -72,6 +73,14 @@ export function SubmissionForm() {
       </p>
 
       <div className="mt-5 grid gap-4 md:grid-cols-2">
+        <input
+          aria-hidden="true"
+          autoComplete="off"
+          className="hidden"
+          name="companyWebsite"
+          tabIndex={-1}
+          type="text"
+        />
         <label className="grid gap-1 text-sm">
           <span className="font-medium">类型</span>
           <select

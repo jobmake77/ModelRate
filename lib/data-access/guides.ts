@@ -1,4 +1,5 @@
 import { getPrisma, hasDatabaseUrl } from "@/lib/db/client";
+import { canUseFixtureFallback } from "@/lib/env";
 import { guides, type GuideFixture } from "@/lib/fixtures/guide-data";
 
 export type GuidePublic = GuideFixture;
@@ -10,6 +11,10 @@ export type AdminGuideRow = GuidePublic & {
 
 export async function getPublishedGuides(): Promise<GuidePublic[]> {
   if (!hasDatabaseUrl) {
+    if (!canUseFixtureFallback()) {
+      throw new Error("DATABASE_URL is required for production data access.");
+    }
+
     return guides;
   }
 
@@ -32,7 +37,11 @@ export async function getPublishedGuides(): Promise<GuidePublic[]> {
         row.publishedAt?.toISOString() ?? row.createdAt.toISOString(),
       updatedAt: row.updatedAt.toISOString(),
     }));
-  } catch {
+  } catch (error) {
+    if (!canUseFixtureFallback()) {
+      throw error;
+    }
+
     return guides;
   }
 }
@@ -44,6 +53,10 @@ export async function getGuideBySlug(slug: string) {
 
 export async function getAdminGuides(): Promise<AdminGuideRow[]> {
   if (!hasDatabaseUrl) {
+    if (!canUseFixtureFallback()) {
+      throw new Error("DATABASE_URL is required for production data access.");
+    }
+
     return guides.map((guide) => ({
       ...guide,
       id: guide.slug,
@@ -70,7 +83,11 @@ export async function getAdminGuides(): Promise<AdminGuideRow[]> {
         row.publishedAt?.toISOString() ?? row.createdAt.toISOString(),
       updatedAt: row.updatedAt.toISOString(),
     }));
-  } catch {
+  } catch (error) {
+    if (!canUseFixtureFallback()) {
+      throw error;
+    }
+
     return guides.map((guide) => ({
       ...guide,
       id: guide.slug,

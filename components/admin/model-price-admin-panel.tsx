@@ -95,9 +95,7 @@ export function ModelPriceAdminPanel({
     setPrices((current) => [
       toPriceRow(payload.price),
       ...current.map((price) =>
-        price.modelId === form.modelId && price.sourceType === form.sourceType
-          ? { ...price, isCurrent: false }
-          : price,
+        price.modelId === form.modelId ? { ...price, isCurrent: false } : price,
       ),
     ]);
     setMessage("Price created.");

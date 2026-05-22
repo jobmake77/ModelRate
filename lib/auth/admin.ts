@@ -2,10 +2,29 @@ import { cookies } from "next/headers";
 import { createServerClient } from "@supabase/ssr";
 import { getPrisma, hasDatabaseUrl } from "@/lib/db/client";
 
+export type AdminRole = "owner" | "admin" | "editor" | "viewer";
+export type AdminStatus = "active" | "inactive" | "disabled" | string;
+
 export type AdminSession = {
+  id: string;
   email: string;
-  role: "owner" | "admin" | "editor" | "viewer";
+  role: AdminRole;
+  status: AdminStatus;
 };
+
+export class AdminAuthError extends Error {
+  constructor(
+    message: "Unauthorized" | "Forbidden",
+    public readonly status: 401 | 403,
+  ) {
+    super(message);
+    this.name = "AdminAuthError";
+  }
+}
+
+export function getAdminAuthErrorStatus(error: unknown): 401 | 403 | 500 {
+  return error instanceof AdminAuthError ? error.status : 500;
+}
 
 export async function getCurrentAdmin(): Promise<AdminSession | null> {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -13,11 +32,16 @@ export async function getCurrentAdmin(): Promise<AdminSession | null> {
 
   if (
     process.env.NODE_ENV !== "production" &&
-    (!supabaseUrl || !supabaseAnonKey)
+    (!supabaseUrl || !supabaseAnonKey || !hasDatabaseUrl)
   ) {
     const email =
       process.env.ADMIN_EMAILS?.split(",")[0]?.trim() ?? "admin@example.com";
-    return { email, role: "owner" };
+    return {
+      id: "development-admin",
+      email,
+      role: "owner",
+      status: "active",
+    };
   }
 
   if (!supabaseUrl || !supabaseAnonKey || !hasDatabaseUrl) {
@@ -55,15 +79,36 @@ export async function getCurrentAdmin(): Promise<AdminSession | null> {
     return null;
   }
 
-  return { email, role: admin.role };
+  return {
+    id: admin.id,
+    email,
+    role: admin.role,
+    status: admin.status,
+  };
 }
 
 export async function requireAdmin(): Promise<AdminSession> {
   const admin = await getCurrentAdmin();
 
   if (!admin) {
-    throw new Error("Unauthorized");
+    throw new AdminAuthError("Unauthorized", 401);
   }
 
   return admin;
+}
+
+export async function requireAdminRole(
+  allowedRoles: readonly AdminRole[],
+): Promise<AdminSession> {
+  const admin = await requireAdmin();
+
+  if (!allowedRoles.includes(admin.role)) {
+    throw new AdminAuthError("Forbidden", 403);
+  }
+
+  return admin;
+}
+
+export function canManageAdminUsers(admin: AdminSession): boolean {
+  return admin.role === "owner";
 }

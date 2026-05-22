@@ -1,4 +1,6 @@
 import { getPrisma, hasDatabaseUrl } from "@/lib/db/client";
+import { canUseFixtureFallback } from "@/lib/env";
+import { selectPrimaryCurrentPrice } from "@/lib/data-access/price-policy";
 import {
   exchangeRates,
   modelPrices,
@@ -16,6 +18,10 @@ export type ModelWithPrice = ModelFixture & {
 
 export async function getModelsWithCurrentPrices(): Promise<ModelWithPrice[]> {
   if (!hasDatabaseUrl) {
+    if (!canUseFixtureFallback()) {
+      throw new Error("DATABASE_URL is required for production data access.");
+    }
+
     return getFixtureModelsWithPrices();
   }
 
@@ -28,48 +34,55 @@ export async function getModelsWithCurrentPrices(): Promise<ModelWithPrice[]> {
         prices: {
           where: { isCurrent: true },
           orderBy: { lastCheckedAt: "desc" },
-          take: 1,
         },
       },
       orderBy: [{ provider: { name: "asc" } }, { displayName: "asc" }],
     });
 
-    return rows.map((row) => ({
-      slug: row.slug,
-      providerSlug: row.provider.slug,
-      canonicalModelId: row.canonicalModelId,
-      displayName: row.displayName,
-      family: row.family ?? row.provider.name,
-      description: row.description ?? "",
-      contextWindow: row.contextWindow ?? 0,
-      maxOutputTokens: row.maxOutputTokens ?? 0,
-      supportsVision: row.supportsVision,
-      supportsReasoning: row.supportsReasoning,
-      supportsFunctionCalling: row.supportsFunctionCalling,
-      sourceUrl: row.sourceUrl ?? row.provider.websiteUrl ?? "",
-      lastCheckedAt: row.lastCheckedAt?.toISOString() ?? "",
-      provider: {
-        slug: row.provider.slug,
-        name: row.provider.name,
-        websiteUrl: row.provider.websiteUrl ?? "",
-        description: row.provider.description ?? "",
-      },
-      currentPrice: row.prices[0]
-        ? {
-            modelSlug: row.slug,
-            sourceType: row.prices[0].sourceType,
-            sourceName: row.prices[0].sourceName,
-            sourceUrl: row.prices[0].sourceUrl,
-            inputPricePer1M: Number(row.prices[0].inputPricePer1M),
-            outputPricePer1M: Number(row.prices[0].outputPricePer1M),
-            cachedInputPricePer1M: row.prices[0].cachedInputPricePer1M
-              ? Number(row.prices[0].cachedInputPricePer1M)
-              : undefined,
-            lastCheckedAt: row.prices[0].lastCheckedAt.toISOString(),
-          }
-        : null,
-    }));
-  } catch {
+    return rows.map((row) => {
+      const currentPrice = selectPrimaryCurrentPrice(row.prices);
+
+      return {
+        slug: row.slug,
+        providerSlug: row.provider.slug,
+        canonicalModelId: row.canonicalModelId,
+        displayName: row.displayName,
+        family: row.family ?? row.provider.name,
+        description: row.description ?? "",
+        contextWindow: row.contextWindow ?? 0,
+        maxOutputTokens: row.maxOutputTokens ?? 0,
+        supportsVision: row.supportsVision,
+        supportsReasoning: row.supportsReasoning,
+        supportsFunctionCalling: row.supportsFunctionCalling,
+        sourceUrl: row.sourceUrl ?? row.provider.websiteUrl ?? "",
+        lastCheckedAt: row.lastCheckedAt?.toISOString() ?? "",
+        provider: {
+          slug: row.provider.slug,
+          name: row.provider.name,
+          websiteUrl: row.provider.websiteUrl ?? "",
+          description: row.provider.description ?? "",
+        },
+        currentPrice: currentPrice
+          ? {
+              modelSlug: row.slug,
+              sourceType: currentPrice.sourceType,
+              sourceName: currentPrice.sourceName,
+              sourceUrl: currentPrice.sourceUrl,
+              inputPricePer1M: Number(currentPrice.inputPricePer1M),
+              outputPricePer1M: Number(currentPrice.outputPricePer1M),
+              cachedInputPricePer1M: currentPrice.cachedInputPricePer1M
+                ? Number(currentPrice.cachedInputPricePer1M)
+                : undefined,
+              lastCheckedAt: currentPrice.lastCheckedAt.toISOString(),
+            }
+          : null,
+      };
+    });
+  } catch (error) {
+    if (!canUseFixtureFallback()) {
+      throw error;
+    }
+
     return getFixtureModelsWithPrices();
   }
 }
@@ -81,6 +94,10 @@ export async function getModelBySlug(slug: string) {
 
 export async function getLatestUsdCnyRate() {
   if (!hasDatabaseUrl) {
+    if (!canUseFixtureFallback()) {
+      throw new Error("DATABASE_URL is required for production data access.");
+    }
+
     return exchangeRates[0];
   }
 
@@ -103,7 +120,11 @@ export async function getLatestUsdCnyRate() {
       sourceUrl: rate.sourceUrl ?? "",
       fetchedAt: rate.fetchedAt.toISOString(),
     };
-  } catch {
+  } catch (error) {
+    if (!canUseFixtureFallback()) {
+      throw error;
+    }
+
     return exchangeRates[0];
   }
 }

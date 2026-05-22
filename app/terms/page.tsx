@@ -1,10 +1,12 @@
 import type { Metadata } from "next";
 import { SiteShell } from "@/components/layout/site-shell";
+import { createPublicMetadata } from "@/lib/seo/metadata";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = createPublicMetadata({
   title: "Terms",
   description: "ModelRate terms of use.",
-};
+  path: "/terms",
+});
 
 export default function TermsPage() {
   return (

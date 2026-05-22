@@ -23,6 +23,13 @@ export function RelayDirectory({ relays }: Props) {
   const [provider, setProvider] = useState("all");
   const [pricing, setPricing] = useState<PricingFilter>("all");
   const [sortKey, setSortKey] = useState<SortKey>("name");
+  const hasActiveFilters =
+    query.trim() !== "" ||
+    risk !== "all" ||
+    paymentMethod !== "all" ||
+    provider !== "all" ||
+    pricing !== "all" ||
+    sortKey !== "name";
 
   const paymentMethods = useMemo(
     () =>
@@ -176,8 +183,25 @@ export function RelayDirectory({ relays }: Props) {
             </select>
           </label>
         </div>
-        <div className="mt-3 text-sm text-slate-500">
-          Showing {filteredRelays.length} of {relays.length} relay stations
+        <div className="mt-3 flex flex-wrap items-center justify-between gap-3 text-sm text-slate-500">
+          <span>
+            Showing {filteredRelays.length} of {relays.length} relay stations
+          </span>
+          <button
+            className="rounded-md border border-slate-300 px-3 py-2 text-sm font-medium text-slate-700 disabled:cursor-not-allowed disabled:text-slate-400"
+            disabled={!hasActiveFilters}
+            onClick={() => {
+              setQuery("");
+              setRisk("all");
+              setPaymentMethod("all");
+              setProvider("all");
+              setPricing("all");
+              setSortKey("name");
+            }}
+            type="button"
+          >
+            Reset filters
+          </button>
         </div>
       </div>
 

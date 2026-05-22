@@ -18,6 +18,11 @@ export function ModelPriceTable({ models }: Props) {
   const [provider, setProvider] = useState("all");
   const [capability, setCapability] = useState<CapabilityFilter>("all");
   const [sortKey, setSortKey] = useState<SortKey>("provider");
+  const hasActiveFilters =
+    query.trim() !== "" ||
+    provider !== "all" ||
+    capability !== "all" ||
+    sortKey !== "provider";
 
   const providers = useMemo(
     () =>
@@ -131,8 +136,23 @@ export function ModelPriceTable({ models }: Props) {
             </select>
           </label>
         </div>
-        <div className="mt-3 text-sm text-slate-500">
-          Showing {filteredModels.length} of {models.length} models
+        <div className="mt-3 flex flex-wrap items-center justify-between gap-3 text-sm text-slate-500">
+          <span>
+            Showing {filteredModels.length} of {models.length} models
+          </span>
+          <button
+            className="rounded-md border border-slate-300 px-3 py-2 text-sm font-medium text-slate-700 disabled:cursor-not-allowed disabled:text-slate-400"
+            disabled={!hasActiveFilters}
+            onClick={() => {
+              setQuery("");
+              setProvider("all");
+              setCapability("all");
+              setSortKey("provider");
+            }}
+            type="button"
+          >
+            Reset filters
+          </button>
         </div>
       </div>
 

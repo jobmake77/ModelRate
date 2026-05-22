@@ -24,7 +24,7 @@ test("models page displays source and last checked metadata", async ({
   await page.getByLabel("Provider").selectOption("Anthropic");
   await expect(page.getByText("Claude Sonnet 4.5")).toBeVisible();
   await expect(page.getByText("GPT-4o mini")).not.toBeVisible();
-  await page.getByLabel("Provider").selectOption("all");
+  await page.getByRole("button", { name: "Reset filters" }).click();
   await page.getByLabel("Search").fill("gpt-4o");
   await expect(page.getByText("GPT-4o mini")).toBeVisible();
 });
@@ -78,7 +78,7 @@ test("relays page displays risk and referral metadata", async ({ page }) => {
   await page.getByLabel("Provider").selectOption("xAI");
   await expect(page.getByRole("link", { name: "Crazyrouter" })).toBeVisible();
   await expect(page.getByRole("link", { name: "302.AI" })).not.toBeVisible();
-  await page.getByLabel("Provider").selectOption("all");
+  await page.getByRole("button", { name: "Reset filters" }).click();
   await page.getByRole("link", { name: "OpenRouter" }).click();
   await expect(page.getByRole("heading", { name: "OpenRouter" })).toBeVisible();
   await expect(page.getByText("风险和商业关系")).toBeVisible();

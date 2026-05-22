@@ -181,7 +181,7 @@ Verification:
 - Treat one public model price as the primary current price. If multiple current prices exist for a model, public pages use source priority before recency: official, manual, openrouter, litellm, portkey, relay.
 - Derive relay supported providers from current relay model prices in database mode. Do not rely on fixture-only `supportedProviders` when validating production filters.
 - Add app-level rate limiting or abuse throttling for public write endpoints.
-- Add Sentry or equivalent error monitoring before submitting the site to broader traffic sources.
+- Sentry is wired into the app; configure DSNs and source-map upload env vars before submitting the site to broader traffic sources.
 - Vercel Analytics is wired as the V1 analytics provider; verify production page views after deployment and keep privacy language aligned.
 - Keep canonical metadata, JSON-LD, sitemap and security headers in the launch smoke checklist.
 - Add smoke checks for admin auth, public calculators, sitemap and robots.
@@ -229,7 +229,8 @@ Required state:
 - Robots blocks admin and admin API routes.
 - Baseline security headers are configured in `next.config.ts`.
 - Vercel Analytics is included in the root layout.
-- Sentry remains pending until production DSN and release/source-map handling are configured.
+- Sentry is wired for server, edge, client, request and global React errors. Production reporting starts after DSNs are configured.
+- Sentry source-map upload requires `SENTRY_AUTH_TOKEN`, `SENTRY_ORG` and `SENTRY_PROJECT`.
 
 Verification:
 
@@ -237,6 +238,7 @@ Verification:
 - Run `npm run build`.
 - Run `PLAYWRIGHT_BASE_URL=http://localhost:3000 npm run test:e2e`.
 - Confirm E2E checks canonical metadata, JSON-LD presence and security headers.
+- Confirm a controlled preview error appears in Sentry after DSNs are configured.
 
 ## P2 Post-Launch Work
 

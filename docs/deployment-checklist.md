@@ -14,7 +14,7 @@ This checklist keeps the first production launch boring: one Next.js full-stack 
 - Vercel hosts the Next.js app, public pages, admin pages, API routes and future cron routes.
 - Supabase provides PostgreSQL and Auth.
 - Cloudflare owns DNS for the production domain.
-- Sentry is optional for the first preview, but should be configured before public launch.
+- Sentry is wired into the app and optional for the first preview, but should be configured before public launch.
 - Vercel Analytics is wired into the app as the V1 analytics provider. Do not enable AdSense until content and policy pages are stable.
 
 ## P0 Required Services
@@ -62,6 +62,12 @@ Optional variables:
 
 ```text
 SENTRY_DSN
+NEXT_PUBLIC_SENTRY_DSN
+SENTRY_ORG
+SENTRY_PROJECT
+SENTRY_AUTH_TOKEN
+SENTRY_TRACES_SAMPLE_RATE
+NEXT_PUBLIC_SENTRY_TRACES_SAMPLE_RATE
 OPENROUTER_API_KEY
 EXCHANGE_RATE_API_KEY
 RESEND_API_KEY
@@ -76,6 +82,9 @@ Environment rules:
 - `CLICK_HASH_SALT` must be a production-only random secret. Do not rely on the local fallback.
 - `NEXT_PUBLIC_SITE_URL` must match the canonical production origin before sitemap, robots and auth redirect checks.
 - Vercel Analytics does not require a project env var, but privacy copy must continue to disclose analytics and click tracking behavior.
+- `SENTRY_DSN` enables server/edge error reporting. `NEXT_PUBLIC_SENTRY_DSN` enables client-side reporting.
+- `SENTRY_AUTH_TOKEN`, `SENTRY_ORG` and `SENTRY_PROJECT` are needed only when uploading source maps during production builds.
+- Keep `SENTRY_TRACES_SAMPLE_RATE` and `NEXT_PUBLIC_SENTRY_TRACES_SAMPLE_RATE` low until production traffic is understood.
 
 ## P0 Database Setup
 
@@ -213,7 +222,7 @@ Required checks:
 
 ## P1 Before Broader Distribution
 
-- Configure Sentry or equivalent error monitoring.
+- Configure Sentry DSNs and source-map upload env vars.
 - Confirm Vercel Analytics is receiving production page views after privacy language is reviewed.
 - Add app-level rate limiting or abuse throttling for public write endpoints.
 - Add production smoke checks for admin auth, calculators, sitemap, robots and legal pages.
@@ -233,7 +242,16 @@ Required checks:
   - `X-Frame-Options: DENY`
   - restrictive `Permissions-Policy`
 - Vercel Analytics is enabled in the root layout.
-- Sentry remains a pre-launch operational task until `SENTRY_DSN` and source map handling are configured.
+- Sentry is wired for server, edge, client, request and global React errors. Production reporting starts only after DSNs are configured.
+
+Sentry production check:
+
+1. Create a Sentry Next.js project.
+2. Add `SENTRY_DSN` and `NEXT_PUBLIC_SENTRY_DSN`.
+3. Add `SENTRY_ORG`, `SENTRY_PROJECT` and `SENTRY_AUTH_TOKEN` if source maps should be uploaded during Vercel builds.
+4. Deploy a Vercel preview.
+5. Trigger a controlled test error and confirm it appears in Sentry with the correct environment and release.
+6. Confirm no sensitive request payloads or admin secrets are present in captured events.
 
 ## P2 Post-Launch
 

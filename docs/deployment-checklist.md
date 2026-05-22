@@ -265,6 +265,12 @@ Sentry production check:
 5. Trigger a controlled test error and confirm it appears in Sentry with the correct environment and release.
 6. Confirm no sensitive request payloads or admin secrets are present in captured events.
 
+Production smoke command:
+
+```bash
+npm run ops:smoke-production -- https://your-production-domain.example
+```
+
 ## P2 Post-Launch
 
 - Evaluate AdSense only after stable original content, policy pages, disclosure language and navigation are reviewed.

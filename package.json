@@ -15,6 +15,7 @@
     "db:seed": "tsx prisma/seed.ts",
     "ops:validate-launch-data": "tsx scripts/validate-launch-data.ts",
     "ops:validate-launch-data:strict": "tsx scripts/validate-launch-data.ts --strict",
+    "ops:smoke-production": "tsx scripts/smoke-production.ts",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:e2e": "playwright test",

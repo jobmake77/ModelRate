@@ -140,6 +140,10 @@ Do not announce the site until the production domain, sitemap and robots all agr
 
 Run this against the production URL:
 
+```bash
+npm run ops:smoke-production -- https://your-production-domain.example
+```
+
 - `/` loads and shows the quick calculator.
 - `/models` shows model prices with source and last checked.
 - `/tools/token-cost-calculator` completes one calculation.
@@ -151,6 +155,8 @@ Run this against the production URL:
 - `/admin/users` is owner-only.
 - `POST /api/submissions` accepts valid JSON and rate limits repeated requests.
 - `POST /api/outbound-clicks` rejects arbitrary external URLs.
+
+The script covers the HTTP-safe subset automatically. Keep browser E2E for calculator interactions and admin role workflows.
 
 ## 8. Rollback
 

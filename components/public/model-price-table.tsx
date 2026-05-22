@@ -5,6 +5,10 @@ import { useEffect, useMemo, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { ModelWithPrice } from "@/lib/data-access/models";
 import { formatDate, formatNumber, formatUsd } from "@/lib/formatters/number";
+import {
+  formatPriceSourceName,
+  getPriceSourceNotice,
+} from "@/lib/formatters/source";
 
 type CapabilityFilter = "all" | "vision" | "reasoning" | "tools";
 type SortKey = "provider" | "input-price" | "output-price" | "context";
@@ -243,8 +247,13 @@ export function ModelPriceTable({ initialFilters, models }: Props) {
                           rel="noreferrer"
                           target="_blank"
                         >
-                          {model.currentPrice.sourceName}
+                          {formatPriceSourceName(model.currentPrice)}
                         </a>
+                        {getPriceSourceNotice(model.currentPrice) ? (
+                          <div className="mt-1 text-xs text-amber-700">
+                            {getPriceSourceNotice(model.currentPrice)}
+                          </div>
+                        ) : null}
                         <div className="mt-1 text-xs text-slate-500">
                           Checked {formatDate(model.currentPrice.lastCheckedAt)}
                         </div>

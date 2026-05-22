@@ -4,6 +4,10 @@ import { useState } from "react";
 import type { ModelWithPrice } from "@/lib/data-access/models";
 import { calculateTokenCost } from "@/lib/calculators/pricing";
 import { formatCny, formatUsd } from "@/lib/formatters/number";
+import {
+  formatPriceSourceName,
+  getPriceSourceNotice,
+} from "@/lib/formatters/source";
 
 type Props = {
   models: ModelWithPrice[];
@@ -119,11 +123,15 @@ export function TokenCostCalculator({
               </div>
             </dl>
             <p className="text-xs leading-5 text-slate-500">
-              数据源：{selectedModel.currentPrice.sourceName}；最后检查：
+              数据源：{formatPriceSourceName(selectedModel.currentPrice)}
+              ；最后检查：
               {new Date(
                 selectedModel.currentPrice.lastCheckedAt,
               ).toLocaleDateString("zh-CN")}
               。
+              {getPriceSourceNotice(selectedModel.currentPrice)
+                ? ` ${getPriceSourceNotice(selectedModel.currentPrice)}`
+                : ""}
             </p>
           </div>
         ) : (

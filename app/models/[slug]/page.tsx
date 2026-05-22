@@ -7,6 +7,10 @@ import { Card, CardBody, CardHeader } from "@/components/ui/card";
 import { getModelBySlug } from "@/lib/data-access/models";
 import { getCurrentRelayPricesForModel } from "@/lib/data-access/relays";
 import { formatDate, formatNumber, formatUsd } from "@/lib/formatters/number";
+import {
+  formatPriceSourceName,
+  getPriceSourceNotice,
+} from "@/lib/formatters/source";
 import { createPublicMetadata } from "@/lib/seo/metadata";
 import { softwareApplicationJsonLd } from "@/lib/seo/json-ld";
 
@@ -87,8 +91,13 @@ export default async function ModelDetailPage({ params }: Props) {
                         className="text-blue-700 hover:underline"
                         href={model.currentPrice.sourceUrl}
                       >
-                        {model.currentPrice.sourceName}
+                        {formatPriceSourceName(model.currentPrice)}
                       </a>
+                      {getPriceSourceNotice(model.currentPrice) ? (
+                        <p className="mt-1 max-w-xs text-xs leading-5 text-amber-700">
+                          {getPriceSourceNotice(model.currentPrice)}
+                        </p>
+                      ) : null}
                     </dd>
                   </div>
                   <div className="flex justify-between gap-4">

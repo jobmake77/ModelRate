@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { SiteShell } from "@/components/layout/site-shell";
+import { MarkdownText } from "@/components/public/markdown-text";
 import { JsonLd } from "@/components/seo/json-ld";
 import { Badge } from "@/components/ui/badge";
 import { getGuideBySlug, getPublishedGuides } from "@/lib/data-access/guides";
@@ -106,42 +107,5 @@ export default async function GuideDetailPage({ params }: Props) {
         </section>
       </article>
     </SiteShell>
-  );
-}
-
-function MarkdownText({ content }: { content: string }) {
-  return (
-    <div className="space-y-4 leading-7 text-slate-700">
-      {content
-        .split("\n")
-        .map((line) => line.trim())
-        .filter(Boolean)
-        .map((line, index) => {
-          if (line.startsWith("# ")) {
-            return null;
-          }
-
-          if (line.startsWith("## ")) {
-            return (
-              <h3
-                className="pt-4 text-xl font-semibold text-slate-950"
-                key={`${line}-${index}`}
-              >
-                {line.replace(/^## /, "")}
-              </h3>
-            );
-          }
-
-          if (line.startsWith("- ")) {
-            return (
-              <p className="pl-4" key={`${line}-${index}`}>
-                • {line.replace(/^- /, "")}
-              </p>
-            );
-          }
-
-          return <p key={`${line}-${index}`}>{line}</p>;
-        })}
-    </div>
   );
 }

@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  calculateMultiplierCostComparison,
   calculateModelRate,
   calculateTokenCost,
   convertPriceUnit,
@@ -32,6 +33,38 @@ describe("calculateTokenCost", () => {
         inputPricePer1M: 1,
         outputPricePer1M: 1,
         exchangeRate: 7.2,
+      }),
+    ).toThrow();
+  });
+});
+
+describe("calculateMultiplierCostComparison", () => {
+  it("compares base token cost with multiplied cost", () => {
+    const result = calculateMultiplierCostComparison({
+      inputTokens: 100_000,
+      outputTokens: 10_000,
+      inputPricePer1M: 3,
+      outputPricePer1M: 15,
+      exchangeRate: 7.2,
+      multiplier: 2,
+    });
+
+    expect(result.base.totalUsd).toBe(0.45);
+    expect(result.multiplied.totalUsd).toBe(0.9);
+    expect(result.deltaUsd).toBe(0.45);
+    expect(result.deltaCny).toBe(3.24);
+    expect(result.deltaPercent).toBe(100);
+  });
+
+  it("rejects non-positive multipliers", () => {
+    expect(() =>
+      calculateMultiplierCostComparison({
+        inputTokens: 100_000,
+        outputTokens: 10_000,
+        inputPricePer1M: 3,
+        outputPricePer1M: 15,
+        exchangeRate: 7.2,
+        multiplier: 0,
       }),
     ).toThrow();
   });

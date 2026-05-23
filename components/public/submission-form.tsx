@@ -15,8 +15,18 @@ const submissionTypes: Array<{ label: string; value: SubmissionType }> = [
   { label: "普通反馈", value: "general_feedback" },
 ];
 
-export function SubmissionForm() {
-  const [type, setType] = useState<SubmissionType>("price_correction");
+export function SubmissionForm({
+  defaultType = "price_correction",
+  description = "投稿和纠错会先进入 pending 状态，人工审核后才会影响公开数据。",
+  relayMode = false,
+  title = "提交反馈",
+}: {
+  defaultType?: SubmissionType;
+  description?: string;
+  relayMode?: boolean;
+  title?: string;
+}) {
+  const [type, setType] = useState<SubmissionType>(defaultType);
   const [message, setMessage] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -40,6 +50,12 @@ export function SubmissionForm() {
           sourceUrl: optionalStringValue(formData.get("sourceUrl")),
           modelName: optionalStringValue(formData.get("modelName")),
           relayName: optionalStringValue(formData.get("relayName")),
+          paymentMethods: optionalStringValue(formData.get("paymentMethods")),
+          minimumTopUp: optionalStringValue(formData.get("minimumTopUp")),
+          supportedProviders: optionalStringValue(
+            formData.get("supportedProviders"),
+          ),
+          pricingNotes: optionalStringValue(formData.get("pricingNotes")),
           displayedPrice: optionalStringValue(formData.get("displayedPrice")),
           correctedPrice: optionalStringValue(formData.get("correctedPrice")),
         },
@@ -67,10 +83,8 @@ export function SubmissionForm() {
       className="mt-8 rounded-lg border border-slate-200 bg-white p-5 shadow-sm"
       onSubmit={handleSubmit}
     >
-      <h2 className="text-xl font-semibold text-slate-950">提交反馈</h2>
-      <p className="mt-2 text-sm text-slate-600">
-        投稿和纠错会先进入 pending 状态，人工审核后才会影响公开数据。
-      </p>
+      <h2 className="text-xl font-semibold text-slate-950">{title}</h2>
+      <p className="mt-2 text-sm text-slate-600">{description}</p>
 
       <div className="mt-5 grid gap-4 md:grid-cols-2">
         <input
@@ -81,27 +95,47 @@ export function SubmissionForm() {
           tabIndex={-1}
           type="text"
         />
-        <label className="grid gap-1 text-sm">
-          <span className="font-medium">类型</span>
-          <select
-            className="rounded-md border border-slate-300 px-3 py-2"
-            value={type}
-            onChange={(event) => setType(event.target.value as SubmissionType)}
-          >
-            {submissionTypes.map((item) => (
-              <option key={item.value} value={item.value}>
-                {item.label}
-              </option>
-            ))}
-          </select>
-        </label>
+        {relayMode ? (
+          <input name="type" type="hidden" value="relay_submission" />
+        ) : (
+          <label className="grid gap-1 text-sm">
+            <span className="font-medium">类型</span>
+            <select
+              className="rounded-md border border-slate-300 px-3 py-2"
+              value={type}
+              onChange={(event) =>
+                setType(event.target.value as SubmissionType)
+              }
+            >
+              {submissionTypes.map((item) => (
+                <option key={item.value} value={item.value}>
+                  {item.label}
+                </option>
+              ))}
+            </select>
+          </label>
+        )}
         <TextInput label="主题" name="subject" required />
         <TextInput label="你的称呼" name="submitterName" />
         <TextInput label="邮箱" name="submitterEmail" type="email" />
-        <TextInput label="模型名称" name="modelName" />
-        <TextInput label="中转站名称" name="relayName" />
-        <TextInput label="当前展示价格" name="displayedPrice" />
-        <TextInput label="正确价格" name="correctedPrice" />
+        {relayMode ? null : <TextInput label="模型名称" name="modelName" />}
+        <TextInput
+          label={relayMode ? "中转站名称" : "中转站名称"}
+          name="relayName"
+        />
+        {relayMode ? (
+          <>
+            <TextInput label="支付方式" name="paymentMethods" />
+            <TextInput label="起充金额" name="minimumTopUp" />
+            <TextInput label="支持模型厂商" name="supportedProviders" />
+            <TextInput label="价格说明" name="pricingNotes" />
+          </>
+        ) : (
+          <>
+            <TextInput label="当前展示价格" name="displayedPrice" />
+            <TextInput label="正确价格" name="correctedPrice" />
+          </>
+        )}
         <TextInput label="来源链接" name="sourceUrl" type="url" />
       </div>
 

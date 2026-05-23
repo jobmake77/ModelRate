@@ -35,12 +35,24 @@ export type TokenCostResult = {
   reasoningCostUsd: number;
 };
 
+export const multiplierCostInputSchema = tokenCostInputSchema.extend({
+  multiplier: positiveNumber.default(1),
+});
+
 export type ModelRateInput = z.input<typeof modelRateInputSchema>;
 export type ModelRateResult = {
   modelMultiplier: number;
   completionMultiplier: number;
   effectiveInputPricePer1M: number;
   effectiveOutputPricePer1M: number;
+};
+export type MultiplierCostInput = z.input<typeof multiplierCostInputSchema>;
+export type MultiplierCostResult = {
+  base: TokenCostResult;
+  multiplied: TokenCostResult;
+  deltaUsd: number;
+  deltaCny: number;
+  deltaPercent: number;
 };
 
 const TOKEN_UNIT = 1_000_000;
@@ -76,6 +88,35 @@ export function calculateTokenCost(input: TokenCostInput): TokenCostResult {
     outputCostUsd: roundMoney(outputCostUsd),
     cachedInputCostUsd: roundMoney(cachedInputCostUsd),
     reasoningCostUsd: roundMoney(reasoningCostUsd),
+  };
+}
+
+export function calculateMultiplierCostComparison(
+  input: MultiplierCostInput,
+): MultiplierCostResult {
+  const parsed = multiplierCostInputSchema.parse(input);
+  const base = calculateTokenCost(parsed);
+  const multiplied = calculateTokenCost({
+    ...parsed,
+    inputPricePer1M: parsed.inputPricePer1M * parsed.multiplier,
+    outputPricePer1M: parsed.outputPricePer1M * parsed.multiplier,
+    cachedInputPricePer1M: parsed.cachedInputPricePer1M
+      ? parsed.cachedInputPricePer1M * parsed.multiplier
+      : undefined,
+    reasoningPricePer1M: parsed.reasoningPricePer1M
+      ? parsed.reasoningPricePer1M * parsed.multiplier
+      : undefined,
+  });
+  const deltaUsd = roundMoney(multiplied.totalUsd - base.totalUsd);
+  const deltaCny = roundMoney(multiplied.totalCny - base.totalCny);
+
+  return {
+    base,
+    multiplied,
+    deltaUsd,
+    deltaCny,
+    deltaPercent:
+      base.totalUsd > 0 ? roundMoney((deltaUsd / base.totalUsd) * 100) : 0,
   };
 }
 

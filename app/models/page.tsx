@@ -2,7 +2,10 @@ import type { Metadata } from "next";
 import { SiteShell } from "@/components/layout/site-shell";
 import { ModelPriceTable } from "@/components/public/model-price-table";
 import { JsonLd } from "@/components/seo/json-ld";
-import { getModelsWithCurrentPrices } from "@/lib/data-access/models";
+import {
+  getLatestUsdCnyRate,
+  getModelsWithCurrentPrices,
+} from "@/lib/data-access/models";
 import { createPublicMetadata } from "@/lib/seo/metadata";
 import { itemListJsonLd } from "@/lib/seo/json-ld";
 
@@ -19,8 +22,9 @@ type PageProps = {
 };
 
 export default async function ModelsPage({ searchParams }: PageProps) {
-  const [models, params] = await Promise.all([
+  const [models, exchangeRate, params] = await Promise.all([
     getModelsWithCurrentPrices(),
+    getLatestUsdCnyRate(),
     searchParams ?? Promise.resolve({} as SearchParams),
   ]);
 
@@ -49,8 +53,11 @@ export default async function ModelsPage({ searchParams }: PageProps) {
         </div>
 
         <ModelPriceTable
+          exchangeRate={exchangeRate.rate}
           initialFilters={{
+            audience: getSearchParam(params.audience),
             capability: getSearchParam(params.capability),
+            currency: getSearchParam(params.currency),
             provider: getSearchParam(params.provider),
             query: getSearchParam(params.q),
             sortKey: getSearchParam(params.sort),

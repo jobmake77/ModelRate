@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { TrackedOutboundLink } from "@/components/public/tracked-outbound-link";
+import { SubmissionForm } from "@/components/public/submission-form";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardBody } from "@/components/ui/card";
 import { RelayStationPublic } from "@/lib/data-access/relays";
@@ -164,6 +165,28 @@ export function RelayDirectory({ initialFilters, relays }: Props) {
 
   return (
     <div className="grid gap-4">
+      <section
+        className="rounded-lg border border-blue-100 bg-blue-50 p-5"
+        id="relay-submission"
+      >
+        <div className="flex flex-wrap items-start justify-between gap-4">
+          <div>
+            <h2 className="text-xl font-semibold text-blue-950">
+              申请收录中转站
+            </h2>
+            <p className="mt-2 max-w-3xl text-sm leading-6 text-blue-800">
+              中转站厂商可以提交官网、支付方式、起充金额、支持模型和价格说明。提交后进入后台审核，不会自动发布。
+            </p>
+          </div>
+          <a
+            className="rounded-md bg-blue-700 px-4 py-2 text-sm font-medium text-white hover:bg-blue-800"
+            href="#relay-listing-form"
+          >
+            填写收录信息
+          </a>
+        </div>
+      </section>
+
       <div className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
         <div className="grid gap-3 lg:grid-cols-[minmax(220px,1fr)_140px_150px_150px_140px_150px_130px]">
           <label className="grid gap-1 text-sm">
@@ -377,6 +400,15 @@ export function RelayDirectory({ initialFilters, relays }: Props) {
           No relay stations match the current filters.
         </div>
       ) : null}
+
+      <div id="relay-listing-form">
+        <SubmissionForm
+          defaultType="relay_submission"
+          description="收录申请会进入后台 pending 队列，人工确认公开信息、风险标签和商业关系后才会展示。"
+          relayMode
+          title="中转站收录申请"
+        />
+      </div>
     </div>
   );
 }

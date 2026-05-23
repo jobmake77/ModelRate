@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { SiteShell } from "@/components/layout/site-shell";
-import { TokenCostCalculator } from "@/components/calculators/token-cost-calculator";
+import { UnifiedCostRateCalculator } from "@/components/calculators/unified-cost-rate-calculator";
 import { JsonLd } from "@/components/seo/json-ld";
 import { Card, CardBody, CardHeader } from "@/components/ui/card";
 import {
@@ -13,7 +13,7 @@ import { webApplicationJsonLd } from "@/lib/seo/json-ld";
 export const metadata: Metadata = createPublicMetadata({
   title: "Token 成本计算器",
   description:
-    "输入模型、Token 数和请求次数，估算 AI API 的 USD 和人民币调用成本。",
+    "选择模型并输入 Token 数和倍率，估算 AI API 的 USD 和人民币调用成本。",
   path: "/tools/token-cost-calculator",
 });
 
@@ -29,7 +29,7 @@ export default async function TokenCostCalculatorPage() {
         data={webApplicationJsonLd({
           name: "Token 成本计算器",
           description:
-            "输入模型、Token 数和请求次数，估算 AI API 的 USD 和人民币调用成本。",
+            "选择模型并输入 Token 数和倍率，估算 AI API 的 USD 和人民币调用成本。",
           path: "/tools/token-cost-calculator",
         })}
       />
@@ -41,13 +41,13 @@ export default async function TokenCostCalculatorPage() {
           </h1>
           <p className="mt-3 max-w-3xl text-slate-600">
             选择模型并输入输入/输出 token 数，ModelRate 会按统一的 USD per 1M
-            tokens 口径计算单次和总成本。
+            tokens 口径计算基础成本和倍率后的调用成本。
           </p>
         </div>
 
         <Card>
           <CardBody>
-            <TokenCostCalculator
+            <UnifiedCostRateCalculator
               models={models}
               exchangeRate={exchangeRate.rate}
             />

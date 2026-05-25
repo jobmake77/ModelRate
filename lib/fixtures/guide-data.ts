@@ -15,7 +15,7 @@ export const guides: GuideFixture[] = [
     slug: "how-to-calculate-ai-token-cost",
     title: "如何估算一次 AI API 调用的 Token 成本",
     description:
-      "用统一的 USD per 1M tokens 口径，把输入、输出、请求次数和汇率换算成可比较的调用成本。",
+      "用统一的 USD per 1M tokens 口径，把输入、输出、倍率和汇率换算成可比较的调用成本。",
     category: "calculator",
     seoTitle: "AI Token 成本计算方法",
     seoDescription:
@@ -30,7 +30,8 @@ AI API 价格通常拆成输入价格和输出价格。ModelRate 第一版统一
 
 input_cost = input_tokens / 1_000_000 * input_price_per_1m
 output_cost = output_tokens / 1_000_000 * output_price_per_1m
-total = (input_cost + output_cost) * request_count
+base_total = input_cost + output_cost
+multiplied_total = base_total * multiplier
 
 ## 示例
 
@@ -40,7 +41,7 @@ total = (input_cost + output_cost) * request_count
 
 - 对长上下文任务，先估算输入 token，因为输入通常是主要成本。
 - 对代码生成、长文生成任务，必须单独估算输出 token。
-- 批量任务需要乘以请求次数，再用 USD/CNY 汇率估算人民币预算。
+- 使用中转站时，先看基础成本，再用倍率估算人民币预算。
 
 价格仅供规划和比较，正式调用前请以模型厂商或服务商账单为准。`,
   },

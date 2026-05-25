@@ -13,17 +13,22 @@ const domesticProviderSlugs = new Set([
 ]);
 
 const popularModelSlugs = new Set([
+  "gpt-4o",
   "gpt-4o-mini",
-  "claude-sonnet-4-5",
+  "o3",
+  "o4-mini",
+  "claude-sonnet-4-6",
   "claude-haiku-4-5",
+  "claude-opus-4-7",
   "gemini-2-5-pro",
   "gemini-2-5-flash",
-  "deepseek-chat",
-  "deepseek-reasoner",
+  "deepseek-v4-flash",
+  "deepseek-v4-pro",
   "kimi-k2",
+  "glm-5-turbo",
   "glm-4-5",
   "doubao-seed-1-6",
-  "openrouter-auto",
+  "grok-4-3",
 ]);
 
 export function getModelRegion(model: Pick<ModelWithPrice, "providerSlug">) {
@@ -54,6 +59,48 @@ export function getProviderGroupName(model: ModelWithPrice) {
   }
 
   return model.provider.name;
+}
+
+export function getProviderColor(providerNameOrSlug: string) {
+  const key = providerNameOrSlug.toLowerCase();
+
+  if (key.includes("openai")) {
+    return "oklch(0.62 0.16 165)";
+  }
+
+  if (key.includes("anthropic") || key.includes("claude")) {
+    return "oklch(0.68 0.14 55)";
+  }
+
+  if (key.includes("google") || key.includes("gemini")) {
+    return "oklch(0.62 0.18 240)";
+  }
+
+  if (key.includes("deepseek")) {
+    return "oklch(0.55 0.18 280)";
+  }
+
+  if (key.includes("moonshot") || key.includes("kimi")) {
+    return "oklch(0.66 0.15 300)";
+  }
+
+  if (key.includes("zhipu") || key.includes("glm")) {
+    return "oklch(0.58 0.18 220)";
+  }
+
+  if (key.includes("volcengine") || key.includes("doubao")) {
+    return "oklch(0.65 0.16 30)";
+  }
+
+  if (key.includes("xai") || key.includes("grok")) {
+    return "oklch(0.4 0.02 200)";
+  }
+
+  if (key.includes("openrouter")) {
+    return "oklch(0.55 0.16 250)";
+  }
+
+  return "oklch(0.5 0.01 250)";
 }
 
 export function filterModelsByAudience(

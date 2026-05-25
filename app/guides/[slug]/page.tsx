@@ -59,46 +59,46 @@ export default async function GuideDetailPage({ params }: Props) {
           ]),
         ]}
       />
-      <article className="mx-auto max-w-4xl px-4 py-8 sm:px-6 lg:px-8">
+      <article className="mx-auto w-full max-w-4xl px-4 py-8 md:px-8">
         <div className="mb-8">
-          <Link className="text-sm font-medium text-blue-700" href="/guides">
+          <Link className="text-sm font-medium text-primary" href="/guides">
             ← 返回指南列表
           </Link>
           <div className="mt-5 flex flex-wrap items-center gap-3">
             <Badge tone="blue">{guide.category}</Badge>
-            <span className="text-sm text-slate-500">
+            <span className="text-sm text-muted-foreground">
               Updated {formatDate(guide.updatedAt)}
             </span>
           </div>
-          <h1 className="mt-4 text-3xl font-semibold tracking-tight sm:text-4xl">
+          <h1 className="mt-4 font-display text-3xl font-semibold tracking-tight sm:text-4xl">
             {guide.title}
           </h1>
-          <p className="mt-4 text-lg leading-8 text-slate-600">
+          <p className="mt-4 text-lg leading-8 text-muted-foreground">
             {guide.description}
           </p>
         </div>
 
-        <div className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
+        <div className="rounded-2xl border border-border bg-card p-6 shadow-soft">
           <MarkdownText content={guide.contentMd} />
         </div>
 
-        <section className="mt-6 rounded-lg border border-blue-100 bg-blue-50 p-5">
-          <h2 className="text-lg font-semibold">相关工具</h2>
+        <section className="mt-6 rounded-xl border border-primary/20 bg-primary/5 p-5">
+          <h2 className="font-display text-lg font-semibold">相关工具</h2>
           <div className="mt-3 flex flex-wrap gap-3 text-sm font-medium">
             <Link
-              className="rounded-md bg-white px-3 py-2 text-blue-700 shadow-sm hover:underline"
+              className="rounded-md border border-border bg-card px-3 py-2 text-primary hover:bg-secondary/60"
               href="/tools/token-cost-calculator"
             >
               Token 成本计算器
             </Link>
             <Link
-              className="rounded-md bg-white px-3 py-2 text-blue-700 shadow-sm hover:underline"
+              className="rounded-md border border-border bg-card px-3 py-2 text-primary hover:bg-secondary/60"
               href="/tools/model-rate-calculator"
             >
               倍率计算器
             </Link>
             <Link
-              className="rounded-md bg-white px-3 py-2 text-blue-700 shadow-sm hover:underline"
+              className="rounded-md border border-border bg-card px-3 py-2 text-primary hover:bg-secondary/60"
               href="/models"
             >
               模型价格表

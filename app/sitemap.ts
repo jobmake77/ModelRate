@@ -11,7 +11,7 @@ const staticPaths = [
   "/guides",
   "/tools/token-cost-calculator",
   "/tools/model-rate-calculator",
-  "/about",
+  "/relays/submit",
   "/contact",
   "/privacy",
   "/terms",

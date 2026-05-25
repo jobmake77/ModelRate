@@ -16,15 +16,19 @@ export default function GlobalError({
 
   return (
     <html lang="zh-CN">
-      <body className="bg-slate-50 text-slate-950">
+      <body className="bg-background text-foreground">
         <main className="mx-auto flex min-h-screen max-w-xl flex-col justify-center px-6 py-16">
-          <p className="text-sm font-medium text-red-700">Application error</p>
-          <h1 className="mt-3 text-3xl font-semibold">页面暂时无法打开</h1>
-          <p className="mt-4 leading-7 text-slate-600">
+          <p className="text-sm font-medium text-destructive">
+            Application error
+          </p>
+          <h1 className="mt-3 font-display text-3xl font-semibold">
+            页面暂时无法打开
+          </h1>
+          <p className="mt-4 leading-7 text-muted-foreground">
             系统已经记录这个错误。你可以稍后重试，或返回上一页继续浏览。
           </p>
           <button
-            className="mt-6 w-fit rounded-md bg-slate-950 px-4 py-2 text-sm font-medium text-white"
+            className="mt-6 w-fit rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground"
             onClick={reset}
             type="button"
           >

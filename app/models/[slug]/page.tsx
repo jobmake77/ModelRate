@@ -53,15 +53,17 @@ export default async function ModelDetailPage({ params }: Props) {
           path: `/models/${model.slug}`,
         })}
       />
-      <div className="mx-auto max-w-5xl px-4 py-8 sm:px-6 lg:px-8">
+      <div className="mx-auto w-full max-w-5xl px-4 py-8 md:px-8">
         <div className="mb-6">
-          <p className="text-sm font-medium text-blue-700">
+          <p className="text-sm font-medium text-primary">
             {model.provider.name}
           </p>
-          <h1 className="mt-2 text-3xl font-semibold tracking-tight">
+          <h1 className="mt-2 font-display text-3xl font-semibold tracking-tight">
             {model.displayName}
           </h1>
-          <p className="mt-3 max-w-3xl text-slate-600">{model.description}</p>
+          <p className="mt-3 max-w-3xl text-muted-foreground">
+            {model.description}
+          </p>
         </div>
 
         <div className="grid gap-6 lg:grid-cols-2">
@@ -73,22 +75,22 @@ export default async function ModelDetailPage({ params }: Props) {
               {model.currentPrice ? (
                 <dl className="grid gap-4 text-sm">
                   <div className="flex justify-between gap-4">
-                    <dt className="text-slate-500">Input / 1M</dt>
-                    <dd className="font-semibold">
+                    <dt className="text-muted-foreground">Input / 1M</dt>
+                    <dd className="font-mono font-semibold">
                       {formatUsd(model.currentPrice.inputPricePer1M)}
                     </dd>
                   </div>
                   <div className="flex justify-between gap-4">
-                    <dt className="text-slate-500">Output / 1M</dt>
-                    <dd className="font-semibold">
+                    <dt className="text-muted-foreground">Output / 1M</dt>
+                    <dd className="font-mono font-semibold">
                       {formatUsd(model.currentPrice.outputPricePer1M)}
                     </dd>
                   </div>
                   <div className="flex justify-between gap-4">
-                    <dt className="text-slate-500">Source</dt>
+                    <dt className="text-muted-foreground">Source</dt>
                     <dd>
                       <a
-                        className="text-blue-700 hover:underline"
+                        className="text-primary hover:underline"
                         href={model.currentPrice.sourceUrl}
                       >
                         {formatPriceSourceName(model.currentPrice)}
@@ -101,12 +103,12 @@ export default async function ModelDetailPage({ params }: Props) {
                     </dd>
                   </div>
                   <div className="flex justify-between gap-4">
-                    <dt className="text-slate-500">Last checked</dt>
+                    <dt className="text-muted-foreground">Last checked</dt>
                     <dd>{formatDate(model.currentPrice.lastCheckedAt)}</dd>
                   </div>
                 </dl>
               ) : (
-                <p className="text-sm text-slate-600">暂无当前价格。</p>
+                <p className="text-sm text-muted-foreground">暂无当前价格。</p>
               )}
             </CardBody>
           </Card>
@@ -118,14 +120,14 @@ export default async function ModelDetailPage({ params }: Props) {
             <CardBody className="space-y-4">
               <dl className="grid gap-4 text-sm">
                 <div className="flex justify-between gap-4">
-                  <dt className="text-slate-500">Context window</dt>
-                  <dd className="font-semibold">
+                  <dt className="text-muted-foreground">Context window</dt>
+                  <dd className="font-mono font-semibold">
                     {formatNumber(model.contextWindow)}
                   </dd>
                 </div>
                 <div className="flex justify-between gap-4">
-                  <dt className="text-slate-500">Max output</dt>
-                  <dd className="font-semibold">
+                  <dt className="text-muted-foreground">Max output</dt>
+                  <dd className="font-mono font-semibold">
                     {formatNumber(model.maxOutputTokens)}
                   </dd>
                 </div>
@@ -145,17 +147,17 @@ export default async function ModelDetailPage({ params }: Props) {
           </Card>
         </div>
 
-        <section className="mt-6 rounded-lg border border-slate-200 bg-white shadow-sm">
-          <div className="border-b border-slate-200 px-5 py-4">
-            <h2 className="font-semibold">中转站价格和倍率</h2>
-            <p className="mt-1 text-sm text-slate-600">
+        <section className="mt-6 overflow-hidden rounded-2xl border border-border bg-card shadow-soft">
+          <div className="border-b border-border px-5 py-4">
+            <h2 className="font-display font-semibold">中转站价格和倍率</h2>
+            <p className="mt-1 text-sm text-muted-foreground">
               当前已维护的中转站价格或倍率。推荐、赞助和风险标签不代表官方背书。
             </p>
           </div>
           {relayPrices.length ? (
             <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-slate-200 text-sm">
-                <thead className="bg-slate-50 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
+              <table className="min-w-full divide-y divide-border text-sm">
+                <thead className="bg-muted/60 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                   <tr>
                     <th className="px-4 py-3">Relay</th>
                     <th className="px-4 py-3">Route</th>
@@ -164,7 +166,7 @@ export default async function ModelDetailPage({ params }: Props) {
                     <th className="px-4 py-3">Metadata</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-100">
+                <tbody className="divide-y divide-border/70">
                   {relayPrices.map((price) => (
                     <tr
                       className="align-top"
@@ -172,7 +174,7 @@ export default async function ModelDetailPage({ params }: Props) {
                     >
                       <td className="px-4 py-4">
                         <a
-                          className="font-medium text-slate-950 hover:underline"
+                          className="font-medium text-primary hover:underline"
                           href={`/relays/${price.relaySlug}`}
                         >
                           {price.relayName}
@@ -196,13 +198,13 @@ export default async function ModelDetailPage({ params }: Props) {
                         {price.routeName ?? "default"}
                       </td>
                       <td className="px-4 py-4">
-                        <div>
+                        <div className="font-mono">
                           Model:{" "}
                           {price.modelMultiplier === null
                             ? "N/A"
                             : `${price.modelMultiplier}x`}
                         </div>
-                        <div className="text-slate-500">
+                        <div className="font-mono text-muted-foreground">
                           Completion:{" "}
                           {price.completionMultiplier === null
                             ? "N/A"
@@ -210,13 +212,13 @@ export default async function ModelDetailPage({ params }: Props) {
                         </div>
                       </td>
                       <td className="px-4 py-4">
-                        <div>
+                        <div className="font-mono">
                           In:{" "}
                           {price.inputPricePer1M === null
                             ? "N/A"
                             : `${formatUsd(price.inputPricePer1M)} / 1M`}
                         </div>
-                        <div className="text-slate-500">
+                        <div className="font-mono text-muted-foreground">
                           Out:{" "}
                           {price.outputPricePer1M === null
                             ? "N/A"
@@ -226,7 +228,7 @@ export default async function ModelDetailPage({ params }: Props) {
                       <td className="px-4 py-4">
                         {price.sourceUrl ? (
                           <a
-                            className="font-medium text-blue-700 hover:underline"
+                            className="font-medium text-primary hover:underline"
                             href={price.sourceUrl}
                             rel="noreferrer"
                             target="_blank"
@@ -234,9 +236,11 @@ export default async function ModelDetailPage({ params }: Props) {
                             Source
                           </a>
                         ) : (
-                          <span className="text-slate-500">No source</span>
+                          <span className="text-muted-foreground">
+                            No source
+                          </span>
                         )}
-                        <div className="mt-1 text-xs text-slate-500">
+                        <div className="mt-1 text-xs text-muted-foreground">
                           Checked{" "}
                           {price.lastCheckedAt
                             ? formatDate(price.lastCheckedAt)
@@ -249,7 +253,7 @@ export default async function ModelDetailPage({ params }: Props) {
               </table>
             </div>
           ) : (
-            <div className="p-5 text-sm text-slate-500">
+            <div className="p-5 text-sm text-muted-foreground">
               暂无已维护的中转站价格或倍率。
             </div>
           )}

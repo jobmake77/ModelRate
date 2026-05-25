@@ -33,6 +33,11 @@ enum RelayStatus {
   archived
 }
 
+enum RelayChannelType {
+  official_direct
+  third_party_relay
+}
+
 enum RiskLevel {
   unknown
   low
@@ -114,27 +119,27 @@ model Model {
 }
 
 model ModelPrice {
-  id                       String          @id @default(uuid()) @db.Uuid
-  modelId                  String          @map("model_id") @db.Uuid
-  model                    Model           @relation(fields: [modelId], references: [id], onDelete: Cascade)
-  sourceType               PriceSourceType @map("source_type")
-  sourceName               String          @map("source_name")
-  sourceUrl                String          @map("source_url")
-  currency                 String          @default("USD")
-  inputPricePer1M          Decimal         @map("input_price_per_1m") @db.Decimal(18, 8)
-  outputPricePer1M         Decimal         @map("output_price_per_1m") @db.Decimal(18, 8)
-  cachedInputPricePer1M    Decimal?        @map("cached_input_price_per_1m") @db.Decimal(18, 8)
-  cachedOutputPricePer1M   Decimal?        @map("cached_output_price_per_1m") @db.Decimal(18, 8)
-  reasoningPricePer1M      Decimal?        @map("reasoning_price_per_1m") @db.Decimal(18, 8)
-  imagePricePerUnit        Decimal?        @map("image_price_per_unit") @db.Decimal(18, 8)
-  audioInputPricePer1M     Decimal?        @map("audio_input_price_per_1m") @db.Decimal(18, 8)
-  audioOutputPricePer1M    Decimal?        @map("audio_output_price_per_1m") @db.Decimal(18, 8)
-  effectiveFrom            DateTime?       @map("effective_from") @db.Date
-  lastCheckedAt            DateTime        @map("last_checked_at") @db.Timestamptz(6)
-  isCurrent                Boolean         @default(true) @map("is_current")
-  notes                    String?
-  createdAt                DateTime        @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt                DateTime        @updatedAt @map("updated_at") @db.Timestamptz(6)
+  id                     String          @id @default(uuid()) @db.Uuid
+  modelId                String          @map("model_id") @db.Uuid
+  model                  Model           @relation(fields: [modelId], references: [id], onDelete: Cascade)
+  sourceType             PriceSourceType @map("source_type")
+  sourceName             String          @map("source_name")
+  sourceUrl              String          @map("source_url")
+  currency               String          @default("USD")
+  inputPricePer1M        Decimal         @map("input_price_per_1m") @db.Decimal(18, 8)
+  outputPricePer1M       Decimal         @map("output_price_per_1m") @db.Decimal(18, 8)
+  cachedInputPricePer1M  Decimal?        @map("cached_input_price_per_1m") @db.Decimal(18, 8)
+  cachedOutputPricePer1M Decimal?        @map("cached_output_price_per_1m") @db.Decimal(18, 8)
+  reasoningPricePer1M    Decimal?        @map("reasoning_price_per_1m") @db.Decimal(18, 8)
+  imagePricePerUnit      Decimal?        @map("image_price_per_unit") @db.Decimal(18, 8)
+  audioInputPricePer1M   Decimal?        @map("audio_input_price_per_1m") @db.Decimal(18, 8)
+  audioOutputPricePer1M  Decimal?        @map("audio_output_price_per_1m") @db.Decimal(18, 8)
+  effectiveFrom          DateTime?       @map("effective_from") @db.Date
+  lastCheckedAt          DateTime        @map("last_checked_at") @db.Timestamptz(6)
+  isCurrent              Boolean         @default(true) @map("is_current")
+  notes                  String?
+  createdAt              DateTime        @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt              DateTime        @updatedAt @map("updated_at") @db.Timestamptz(6)
 
   @@index([modelId])
   @@index([sourceType])
@@ -143,35 +148,37 @@ model ModelPrice {
 }
 
 model RelayStation {
-  id                     String                @id @default(uuid()) @db.Uuid
-  slug                   String                @unique
-  name                   String
-  domain                 String                @unique
-  websiteUrl             String                @map("website_url")
-  logoUrl                String?               @map("logo_url")
-  description            String?
-  billingModes           String[]              @map("billing_modes")
-  paymentMethods         String[]              @map("payment_methods")
-  minimumTopUpAmount     Decimal?              @map("minimum_top_up_amount") @db.Decimal(18, 4)
-  minimumTopUpCurrency   String?               @map("minimum_top_up_currency")
-  supportChannels        String[]              @map("support_channels")
-  hasPublicPricing       Boolean               @default(false) @map("has_public_pricing")
-  hasTrialCredit         Boolean               @default(false) @map("has_trial_credit")
-  hasReferralProgram     Boolean               @default(false) @map("has_referral_program")
-  referralUrl            String?               @map("referral_url")
-  couponCode             String?               @map("coupon_code")
-  isSponsored            Boolean               @default(false) @map("is_sponsored")
-  isVerified             Boolean               @default(false) @map("is_verified")
-  status                 RelayStatus           @default(draft)
-  riskLevel              RiskLevel             @default(unknown) @map("risk_level")
-  lastCheckedAt          DateTime?             @map("last_checked_at") @db.Timestamptz(6)
-  relayModelPrices       RelayModelPrice[]
-  riskTags               RelayStationRiskTag[]
-  createdAt              DateTime              @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt              DateTime              @updatedAt @map("updated_at") @db.Timestamptz(6)
+  id                   String                @id @default(uuid()) @db.Uuid
+  slug                 String                @unique
+  name                 String
+  domain               String                @unique
+  websiteUrl           String                @map("website_url")
+  logoUrl              String?               @map("logo_url")
+  description          String?
+  billingModes         String[]              @map("billing_modes")
+  paymentMethods       String[]              @map("payment_methods")
+  minimumTopUpAmount   Decimal?              @map("minimum_top_up_amount") @db.Decimal(18, 4)
+  minimumTopUpCurrency String?               @map("minimum_top_up_currency")
+  supportChannels      String[]              @map("support_channels")
+  channelType          RelayChannelType      @default(third_party_relay) @map("channel_type")
+  hasPublicPricing     Boolean               @default(false) @map("has_public_pricing")
+  hasTrialCredit       Boolean               @default(false) @map("has_trial_credit")
+  hasReferralProgram   Boolean               @default(false) @map("has_referral_program")
+  referralUrl          String?               @map("referral_url")
+  couponCode           String?               @map("coupon_code")
+  isSponsored          Boolean               @default(false) @map("is_sponsored")
+  isVerified           Boolean               @default(false) @map("is_verified")
+  status               RelayStatus           @default(draft)
+  riskLevel            RiskLevel             @default(unknown) @map("risk_level")
+  lastCheckedAt        DateTime?             @map("last_checked_at") @db.Timestamptz(6)
+  relayModelPrices     RelayModelPrice[]
+  riskTags             RelayStationRiskTag[]
+  createdAt            DateTime              @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt            DateTime              @updatedAt @map("updated_at") @db.Timestamptz(6)
 
   @@index([status])
   @@index([isSponsored])
+  @@index([channelType])
   @@map("relay_stations")
 }
 

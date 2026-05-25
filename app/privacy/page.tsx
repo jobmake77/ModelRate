@@ -12,8 +12,8 @@ export const metadata: Metadata = createPublicMetadata({
 export default function PrivacyPage() {
   return (
     <SiteShell>
-      <article className="mx-auto max-w-3xl px-4 py-10 leading-7 text-slate-700 sm:px-6 lg:px-8">
-        <h1 className="mb-6 text-3xl font-semibold tracking-tight text-slate-950">
+      <article className="mx-auto w-full max-w-3xl px-4 py-10 leading-7 text-foreground/80 md:px-8">
+        <h1 className="mb-6 font-display text-3xl font-semibold tracking-tight text-foreground">
           Privacy Policy
         </h1>
         <div className="space-y-4">

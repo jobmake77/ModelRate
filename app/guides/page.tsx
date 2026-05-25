@@ -37,13 +37,13 @@ export default async function GuidesPage({ searchParams }: PageProps) {
           })),
         })}
       />
-      <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+      <div className="mx-auto w-full max-w-7xl px-4 py-8 md:px-8">
         <div className="mb-6">
-          <p className="text-sm font-medium text-blue-700">Guides</p>
-          <h1 className="mt-2 text-3xl font-semibold tracking-tight">
+          <p className="text-sm font-medium text-primary">Guides</p>
+          <h1 className="mt-2 font-display text-3xl font-semibold tracking-tight">
             AI API 成本与中转站指南
           </h1>
-          <p className="mt-3 max-w-3xl text-slate-600">
+          <p className="mt-3 max-w-3xl text-sm leading-7 text-muted-foreground md:text-[15px]">
             用可复核的公式、数据口径和风险清单，帮助开发者在调用模型前先看清成本和服务边界。
           </p>
         </div>

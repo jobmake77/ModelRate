@@ -42,6 +42,7 @@ export async function getDataQualitySummary(): Promise<DataQualityItem[]> {
     publishedRelaysUnknownRisk,
     publishedRelaysMissingLastChecked,
     publishedRelaysWithoutPublicPricing,
+    publishedRelaysMissingChannel,
     oldPendingSubmissions,
   ] = await Promise.all([
     prisma.modelPrice.count({
@@ -71,6 +72,7 @@ export async function getDataQualitySummary(): Promise<DataQualityItem[]> {
     prisma.relayStation.count({
       where: { status: "published", hasPublicPricing: false },
     }),
+    Promise.resolve(0),
     prisma.submission.count({
       where: { status: "pending", createdAt: { lt: pendingBefore } },
     }),
@@ -82,6 +84,7 @@ export async function getDataQualitySummary(): Promise<DataQualityItem[]> {
     publishedRelaysMissingLastChecked,
     publishedRelaysUnknownRisk,
     publishedRelaysWithoutPublicPricing,
+    publishedRelaysMissingChannel,
     relayPricesMissingLastChecked,
     relayPricesMissingSource,
     staleModelPrices,
@@ -111,6 +114,9 @@ function getFixtureDataQualitySummary() {
     publishedRelaysWithoutPublicPricing: relayStations.filter(
       (relay) => relay.status === "published" && !relay.hasPublicPricing,
     ).length,
+    publishedRelaysMissingChannel: relayStations.filter(
+      (relay) => relay.status === "published" && !relay.channelType,
+    ).length,
     relayPricesMissingLastChecked: relayModelPrices.filter(
       (price) => price.isCurrent && !price.lastCheckedAt,
     ).length,
@@ -132,6 +138,7 @@ function buildQualityItems(counts: {
   publishedRelaysMissingLastChecked: number;
   publishedRelaysUnknownRisk: number;
   publishedRelaysWithoutPublicPricing: number;
+  publishedRelaysMissingChannel: number;
   relayPricesMissingLastChecked: number;
   relayPricesMissingSource: number;
   staleModelPrices: number;
@@ -193,6 +200,13 @@ function buildQualityItems(counts: {
       label: "No public pricing",
       tone: toneFor(counts.publishedRelaysWithoutPublicPricing),
       value: counts.publishedRelaysWithoutPublicPricing,
+    },
+    {
+      detail: "Published relays",
+      href: "/admin/relays",
+      label: "Missing relay channel",
+      tone: toneFor(counts.publishedRelaysMissingChannel),
+      value: counts.publishedRelaysMissingChannel,
     },
     {
       detail: `Pending over ${pendingSubmissionDays} days`,

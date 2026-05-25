@@ -1,6 +1,6 @@
 export function MarkdownText({ content }: { content: string }) {
   return (
-    <div className="space-y-4 leading-7 text-slate-700">
+    <div className="space-y-4 leading-7 text-foreground/80">
       {content
         .split("\n")
         .map((line) => line.trim())
@@ -13,7 +13,7 @@ export function MarkdownText({ content }: { content: string }) {
           if (line.startsWith("## ")) {
             return (
               <h3
-                className="pt-4 text-xl font-semibold text-slate-950"
+                className="pt-4 font-display text-xl font-semibold text-foreground"
                 key={`${line}-${index}`}
               >
                 {line.replace(/^## /, "")}
@@ -24,7 +24,7 @@ export function MarkdownText({ content }: { content: string }) {
           if (line.startsWith("### ")) {
             return (
               <h4
-                className="pt-3 text-lg font-semibold text-slate-950"
+                className="pt-3 font-display text-lg font-semibold text-foreground"
                 key={`${line}-${index}`}
               >
                 {line.replace(/^### /, "")}

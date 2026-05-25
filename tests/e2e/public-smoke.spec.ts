@@ -4,13 +4,32 @@ test("home page renders calculator and model pricing", async ({ page }) => {
   await page.goto("/");
 
   await expect(
-    page.getByRole("heading", { name: /模型价格、Token 成本和倍率换算工具/ }),
+    page.getByRole("heading", { name: /模型价格和中转站倍率换算工具/ }),
   ).toBeVisible();
   await expect(page.getByLabel("模型")).toBeVisible();
-  await expect(page.getByText(/估算结果/)).toBeVisible();
+  await expect(page.locator("select", { hasText: "GPT-4o" })).toHaveCount(0);
+  await page.getByLabel("模型").click();
+  await expect(page.getByPlaceholder("搜索模型或厂商")).toBeVisible();
+  await page.getByPlaceholder("搜索模型或厂商").fill("claude");
+  await page.getByRole("option", { name: /Claude Sonnet 4.6/ }).click();
+  await expect(page.getByAltText("Anthropic logo").first()).toBeVisible();
+  await expect(page.getByText("上下文窗口（来源值）")).toBeVisible();
+  await expect(page.getByText("最大输出（来源值）")).toBeVisible();
+  await expect(page.getByText(/来源未公开时显示“未公开”/)).toBeVisible();
+  await expect(page.getByText(/每 1M tokens 单价换算/)).toBeVisible();
+  await expect(page.getByLabel("输入 tokens")).toHaveCount(0);
+  await expect(page.getByLabel("输出 tokens")).toHaveCount(0);
+  await expect(page.getByRole("button", { name: "1x" })).toHaveCount(0);
+  await expect(page.getByLabel("中转站倍率")).toHaveValue("");
+  await expect(
+    page.getByText("请输入倍率后查看中转站换算结果。"),
+  ).toBeVisible();
+  await expect(page.getByText("输入价差 / 1M")).toHaveCount(0);
+  await expect(page.getByText("输出价差 / 1M")).toHaveCount(0);
   await expect(page.getByLabel("请求次数")).toHaveCount(0);
   await expect(page.getByText("第一阶段范围")).toHaveCount(0);
   await expect(page.getByRole("navigation")).not.toContainText("管理后台");
+  await expect(page.getByRole("navigation")).not.toContainText("关于");
   await expect(
     page.getByRole("link", { name: "查看完整模型价格表" }),
   ).toBeVisible();
@@ -30,9 +49,12 @@ test("models page displays source and last checked metadata", async ({
 
   await expect(page.getByRole("heading", { name: "模型价格表" })).toBeVisible();
   await expect(page.getByText("GPT-4o mini")).toBeVisible();
-  await expect(page.getByText(/Checked/).first()).toBeVisible();
-  await page.getByLabel("厂商").selectOption("Anthropic");
-  await expect(page.getByText("Claude Sonnet 4.5")).toBeVisible();
+  await expect(page.getByText("Last checked").first()).toBeVisible();
+  await expect(page.getByText("数据来源").first()).toBeVisible();
+  await expect(page.getByText("输出 / 1M").first()).toBeVisible();
+  await page.getByRole("button", { name: "Anthropic" }).click();
+  await expect(page.getByText("Claude Sonnet 4.6")).toBeVisible();
+  await expect(page.getByAltText("Anthropic logo").first()).toBeVisible();
   await expect(page.getByText("GPT-4o mini")).not.toBeVisible();
   await expect(page).toHaveURL(/provider=Anthropic/);
   await page.getByRole("button", { name: "重置筛选" }).click();
@@ -40,17 +62,23 @@ test("models page displays source and last checked metadata", async ({
   await page.getByLabel("搜索").fill("gpt-4o");
   await expect(page.getByText("GPT-4o mini")).toBeVisible();
   await expect(page).toHaveURL(/q=gpt-4o/);
-  await page.getByLabel("货币").selectOption("CNY");
+  await page.getByRole("button", { name: "CNY" }).click();
   await expect(page.getByText(/¥/).first()).toBeVisible();
 });
 
 test("models page restores filters from URL", async ({ page }) => {
   await page.goto("/models?provider=Anthropic&capability=vision&q=claude");
 
-  await expect(page.getByText("Claude Sonnet 4.5")).toBeVisible();
+  await expect(page.getByText("Claude Sonnet 4.6")).toBeVisible();
   await expect(page.getByText("GPT-4o mini")).not.toBeVisible();
-  await expect(page.getByLabel("厂商")).toHaveValue("Anthropic");
-  await expect(page.getByLabel("能力")).toHaveValue("vision");
+  await expect(page.getByRole("button", { name: "Anthropic" })).toHaveAttribute(
+    "aria-pressed",
+    "true",
+  );
+  await expect(page.getByRole("button", { name: "视觉" })).toHaveAttribute(
+    "aria-pressed",
+    "true",
+  );
   await expect(page.getByLabel("搜索")).toHaveValue("claude");
 });
 
@@ -68,13 +96,15 @@ test("model detail links maintained relay pricing", async ({ page }) => {
 test("token cost calculator updates result", async ({ page }) => {
   await page.goto("/tools/token-cost-calculator");
 
-  await page.getByLabel("输入 tokens").fill("100000");
-  await page.getByLabel("输出 tokens").fill("10000");
-  await page.getByLabel("自定义倍率").fill("2");
+  await expect(page.getByLabel("输入 tokens")).toHaveCount(0);
+  await expect(page.getByLabel("输出 tokens")).toHaveCount(0);
+  await expect(page.getByRole("button", { name: "1x" })).toHaveCount(0);
+  await expect(page.getByLabel("中转站倍率")).toHaveValue("");
+  await page.getByLabel("中转站倍率").fill("0.2");
 
-  await expect(page.getByText("估算结果")).toBeVisible();
-  await expect(page.getByText("基础价格")).toBeVisible();
-  await expect(page.getByRole("heading", { name: "2x 倍率后" })).toBeVisible();
+  await expect(page.getByText("每 1M tokens 单价换算")).toBeVisible();
+  await expect(page.getByText("基础输入 / 1M")).toBeVisible();
+  await expect(page.getByText("中转站换算价 · 0.2x")).toBeVisible();
 });
 
 test("model rate calculator renders multiplier result", async ({ page }) => {
@@ -83,8 +113,10 @@ test("model rate calculator renders multiplier result", async ({ page }) => {
   await expect(
     page.getByRole("heading", { name: "One-API / New API 倍率计算器" }),
   ).toBeVisible();
-  await expect(page.getByText("基础价格")).toBeVisible();
-  await expect(page.getByText(/倍率后/).first()).toBeVisible();
+  await expect(page.getByText("基础输入 / 1M")).toBeVisible();
+  await expect(page.getByLabel("中转站倍率")).toHaveValue("");
+  await page.getByLabel("中转站倍率").fill("0.01");
+  await expect(page.getByText("中转站换算价 · 0.01x")).toBeVisible();
 });
 
 test("relays page displays risk and referral metadata", async ({ page }) => {
@@ -95,19 +127,40 @@ test("relays page displays risk and referral metadata", async ({ page }) => {
   ).toBeVisible();
   await expect(page.getByRole("link", { name: "OpenRouter" })).toBeVisible();
   await expect(page.getByText(/Risk:/).first()).toBeVisible();
-  await expect(page.getByText("申请收录中转站")).toBeVisible();
-  await page.getByLabel("Payment").selectOption("Alipay");
+  await expect(page.getByRole("link", { name: "中转站收录" })).toBeVisible();
+  await expect(page.getByText("入口类型")).toBeVisible();
+  await expect(page.getByText("官方直连").first()).toBeVisible();
+  await expect(page.getByText("二次中转").first()).toBeVisible();
+  await expect(
+    page.getByRole("heading", { name: "中转站收录申请" }),
+  ).toHaveCount(0);
+  await page.getByRole("button", { name: "官方直连" }).click();
+  await expect(
+    page.getByRole("link", { name: "OpenAI Platform" }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("link", { name: "OpenRouter" }),
+  ).not.toBeVisible();
+  await expect(page).toHaveURL(/channel=official/);
+  await page.getByRole("button", { name: "二次中转" }).click();
+  await expect(page.getByRole("link", { name: "OpenRouter" })).toBeVisible();
+  await expect(
+    page.getByRole("link", { name: "OpenAI Platform" }),
+  ).not.toBeVisible();
+  await expect(page).toHaveURL(/channel=relay/);
+  await page.getByRole("button", { name: "Reset filters" }).click();
+  await page.getByRole("button", { name: "Alipay" }).click();
   await expect(page.getByRole("link", { name: "302.AI" })).toBeVisible();
   await expect(
     page.getByRole("link", { name: "OpenRouter" }),
   ).not.toBeVisible();
-  await page.getByLabel("Payment").selectOption("all");
-  await page.getByLabel("Provider").selectOption("xAI");
+  await page.getByRole("button", { name: "全部支付" }).click();
+  await page.getByRole("button", { name: "xAI" }).click();
   await expect(page.getByRole("link", { name: "Crazyrouter" })).toBeVisible();
   await expect(page.getByRole("link", { name: "302.AI" })).not.toBeVisible();
   await expect(page).toHaveURL(/provider=xAI/);
-  await page.getByLabel("Provider").selectOption("all");
-  await page.getByLabel("Relationship").selectOption("referral");
+  await page.getByRole("button", { name: "全部模型" }).click();
+  await page.getByRole("button", { name: "Referral" }).click();
   await expect(page.getByRole("link", { name: "302.AI" })).toBeVisible();
   await expect(
     page.getByRole("link", { name: "OpenRouter" }),
@@ -115,8 +168,16 @@ test("relays page displays risk and referral metadata", async ({ page }) => {
   await expect(page).toHaveURL(/relationship=referral/);
   await page.getByRole("button", { name: "Reset filters" }).click();
   await expect(page).toHaveURL(/\/relays$/);
-  await page.getByRole("link", { name: "OpenRouter" }).click();
+  await expect(
+    page
+      .locator('a[href="/relays/openrouter"]')
+      .filter({ hasText: "查看详情" }),
+  ).toBeVisible();
+  await page.goto("/relays/openrouter");
   await expect(page.getByRole("heading", { name: "OpenRouter" })).toBeVisible();
+  await expect(
+    page.getByText("二次中转表示该入口由第三方聚合", { exact: false }),
+  ).toBeVisible();
   await expect(page.getByText("风险和商业关系")).toBeVisible();
   await expect(page.getByText("模型价格和倍率")).toBeVisible();
   await expect(page.getByText("GPT-4o mini")).toBeVisible();
@@ -124,16 +185,74 @@ test("relays page displays risk and referral metadata", async ({ page }) => {
 
 test("relays page restores filters from URL", async ({ page }) => {
   await page.goto(
-    "/relays?payment=Alipay&provider=OpenAI&relationship=referral",
+    "/relays?payment=Alipay&provider=OpenAI&relationship=referral&channel=relay",
   );
 
   await expect(page.getByRole("link", { name: "302.AI" })).toBeVisible();
   await expect(
     page.getByRole("link", { name: "OpenRouter" }),
   ).not.toBeVisible();
-  await expect(page.getByLabel("Payment")).toHaveValue("Alipay");
-  await expect(page.getByLabel("Provider")).toHaveValue("OpenAI");
-  await expect(page.getByLabel("Relationship")).toHaveValue("referral");
+  await expect(page.getByRole("button", { name: "Alipay" })).toHaveAttribute(
+    "aria-pressed",
+    "true",
+  );
+  await expect(page.getByRole("button", { name: "OpenAI" })).toHaveAttribute(
+    "aria-pressed",
+    "true",
+  );
+  await expect(page.getByRole("button", { name: "Referral" })).toHaveAttribute(
+    "aria-pressed",
+    "true",
+  );
+  await expect(page.getByRole("button", { name: "二次中转" })).toHaveAttribute(
+    "aria-pressed",
+    "true",
+  );
+});
+
+test("relay submission page accepts listing requests", async ({
+  page,
+  request,
+}, testInfo) => {
+  await page.goto("/relays");
+  await expect(page.getByRole("link", { name: "中转站收录" })).toHaveAttribute(
+    "href",
+    "/relays/submit",
+  );
+  await page.goto("/relays/submit");
+
+  await expect(
+    page.getByRole("heading", { name: "中转站收录申请" }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("heading", { name: "填写收录信息" }),
+  ).toBeVisible();
+  await expect(page.getByLabel("入口类型")).toHaveValue("third_party_relay");
+
+  const response = await request.post("/api/submissions", {
+    headers: {
+      "x-forwarded-for": `relay-submit-${testInfo.project.name}-${Date.now()}`,
+    },
+    data: {
+      type: "relay_submission",
+      submitterEmail: "relay@example.com",
+      payload: {
+        subject: "Relay listing",
+        message: "Please review this relay station.",
+        relayName: "Example Relay",
+        channelType: "third_party_relay",
+        sourceUrl: "https://example.com/",
+        paymentMethods: "Alipay, USDT",
+        minimumTopUp: "CNY 10",
+        supportedProviders: "OpenAI, Claude",
+        pricingNotes: "Public pricing page available.",
+      },
+    },
+  });
+
+  expect([201, 202]).toContain(response.status());
+  const body = await response.json();
+  expect(body.submission?.status ?? body.status).toBe("pending");
 });
 
 test("guides page links to a useful guide detail", async ({ page }) => {
@@ -147,9 +266,13 @@ test("guides page links to a useful guide detail", async ({ page }) => {
   } else {
     await expect(page.getByLabel("选择指南")).toBeVisible();
   }
-  await page.getByRole("link", { name: "打开独立页面" }).click();
+  await expect(
+    page.getByRole("link", { name: "打开独立页面" }),
+  ).toHaveAttribute("href", "/guides/how-to-calculate-ai-token-cost");
+  await page.goto("/guides/how-to-calculate-ai-token-cost");
   await expect(
     page.getByRole("heading", {
+      level: 1,
       name: "如何估算一次 AI API 调用的 Token 成本",
     }),
   ).toBeVisible();
@@ -167,6 +290,8 @@ test("robots and sitemap expose public URLs and block admin", async ({
   const body = await sitemap?.text();
   expect(body).toContain("/tools/token-cost-calculator");
   expect(body).toContain("/guides/how-to-calculate-ai-token-cost");
+  expect(body).toContain("/relays/submit");
+  expect(body).not.toContain("/about");
 });
 
 test("contact page exposes submission form and API accepts pending feedback", async ({

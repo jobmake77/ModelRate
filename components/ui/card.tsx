@@ -9,7 +9,7 @@ export function Card({
 }) {
   return (
     <section
-      className={`rounded-lg border border-slate-200 bg-white shadow-sm ${className}`}
+      className={`rounded-xl border bg-card text-card-foreground shadow-soft ${className}`}
     >
       {children}
     </section>
@@ -17,7 +17,7 @@ export function Card({
 }
 
 export function CardHeader({ children }: { children: ReactNode }) {
-  return <div className="border-b border-slate-200 px-5 py-4">{children}</div>;
+  return <div className="border-b border-border/70 px-5 py-4">{children}</div>;
 }
 
 export function CardBody({

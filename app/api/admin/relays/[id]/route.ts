@@ -15,6 +15,7 @@ const relayUpdateSchema = z
     minimumTopUpAmount: z.number().finite().min(0).nullable(),
     minimumTopUpCurrency: z.string().trim().max(16).nullable(),
     supportChannels: z.array(z.string().trim().min(1)),
+    channelType: z.enum(["official_direct", "third_party_relay"]),
     hasPublicPricing: z.boolean(),
     hasTrialCredit: z.boolean(),
     hasReferralProgram: z.boolean(),

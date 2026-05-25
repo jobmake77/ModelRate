@@ -19,6 +19,9 @@ const relaySchema = z.object({
   minimumTopUpAmount: z.number().finite().min(0).nullable().optional(),
   minimumTopUpCurrency: z.string().trim().max(16).nullable().optional(),
   supportChannels: z.array(z.string().trim().min(1)).default([]),
+  channelType: z
+    .enum(["official_direct", "third_party_relay"])
+    .default("third_party_relay"),
   hasPublicPricing: z.boolean().default(false),
   hasTrialCredit: z.boolean().default(false),
   hasReferralProgram: z.boolean().default(false),

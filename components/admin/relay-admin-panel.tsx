@@ -6,6 +6,7 @@ import { formatDate } from "@/lib/formatters/number";
 
 type RelayStatus = "draft" | "published" | "hidden" | "archived";
 type RiskLevel = "unknown" | "low" | "medium" | "high";
+type RelayChannelType = "official_direct" | "third_party_relay";
 
 type RelayFormState = {
   slug: string;
@@ -18,6 +19,7 @@ type RelayFormState = {
   minimumTopUpAmount: string;
   minimumTopUpCurrency: string;
   supportChannels: string;
+  channelType: RelayChannelType;
   hasPublicPricing: boolean;
   hasTrialCredit: boolean;
   hasReferralProgram: boolean;
@@ -46,6 +48,7 @@ const emptyForm: RelayFormState = {
   minimumTopUpAmount: "",
   minimumTopUpCurrency: "",
   supportChannels: "",
+  channelType: "third_party_relay",
   hasPublicPricing: false,
   hasTrialCredit: false,
   hasReferralProgram: false,
@@ -225,6 +228,18 @@ export function RelayAdminPanel({ databaseConfigured, initialRelays }: Props) {
           />
           <SelectInput
             disabled={!databaseConfigured}
+            label="Channel type"
+            value={form.channelType}
+            options={["official_direct", "third_party_relay"]}
+            onChange={(value) =>
+              setForm((current) => ({
+                ...current,
+                channelType: value as RelayChannelType,
+              }))
+            }
+          />
+          <SelectInput
+            disabled={!databaseConfigured}
             label="Status"
             value={form.status}
             options={["draft", "published", "hidden", "archived"]}
@@ -343,6 +358,11 @@ export function RelayAdminPanel({ databaseConfigured, initialRelays }: Props) {
                     <span className="rounded-full bg-slate-100 px-2 py-1 text-xs text-slate-600">
                       {draft.status ?? relay.status}
                     </span>
+                    <span className="rounded-full bg-blue-50 px-2 py-1 text-xs text-blue-700">
+                      {formatChannelType(
+                        draft.channelType ?? relay.channelType,
+                      )}
+                    </span>
                     {relay.isSponsored ? (
                       <span className="rounded-full bg-amber-100 px-2 py-1 text-xs text-amber-800">
                         Sponsored
@@ -360,6 +380,17 @@ export function RelayAdminPanel({ databaseConfigured, initialRelays }: Props) {
                   </p>
                 </div>
                 <div className="grid min-w-72 gap-3">
+                  <SelectInput
+                    disabled={!databaseConfigured}
+                    label="Channel"
+                    value={draft.channelType ?? relay.channelType}
+                    options={["official_direct", "third_party_relay"]}
+                    onChange={(value) =>
+                      updateDraft(setDrafts, relay.id, {
+                        channelType: value as RelayChannelType,
+                      })
+                    }
+                  />
                   <SelectInput
                     disabled={!databaseConfigured}
                     label="Status"
@@ -516,6 +547,7 @@ function toCreatePayload(form: RelayFormState) {
     minimumTopUpAmount: optionalNumber(form.minimumTopUpAmount),
     minimumTopUpCurrency: optionalNullableString(form.minimumTopUpCurrency),
     supportChannels: splitList(form.supportChannels),
+    channelType: form.channelType,
     hasPublicPricing: form.hasPublicPricing,
     hasTrialCredit: form.hasTrialCredit,
     hasReferralProgram: form.hasReferralProgram,
@@ -548,6 +580,7 @@ function toUpdatePayload(relay: AdminRelayRow, draft: Partial<AdminRelayRow>) {
         ? relay.minimumTopUpCurrency
         : draft.minimumTopUpCurrency,
     supportChannels: draft.supportChannels ?? relay.supportChannels,
+    channelType: draft.channelType ?? relay.channelType,
     hasPublicPricing: draft.hasPublicPricing ?? relay.hasPublicPricing,
     hasTrialCredit: draft.hasTrialCredit ?? relay.hasTrialCredit,
     hasReferralProgram: draft.hasReferralProgram ?? relay.hasReferralProgram,
@@ -571,6 +604,7 @@ function toRelayRow(relay: {
   isSponsored: boolean;
   isVerified: boolean;
   lastCheckedAt: Date | string | null;
+  channelType: RelayChannelType;
   minimumTopUpAmount: number | string | null;
   minimumTopUpCurrency: string | null;
   name: string;
@@ -597,6 +631,7 @@ function toRelayRow(relay: {
         : Number(relay.minimumTopUpAmount),
     minimumTopUpCurrency: relay.minimumTopUpCurrency,
     supportChannels: relay.supportChannels,
+    channelType: relay.channelType,
     supportedProviders: [],
     hasPublicPricing: relay.hasPublicPricing,
     hasTrialCredit: relay.hasTrialCredit,
@@ -614,6 +649,10 @@ function toRelayRow(relay: {
       ? new Date(relay.lastCheckedAt).toISOString()
       : "",
   };
+}
+
+function formatChannelType(value: RelayChannelType) {
+  return value === "official_direct" ? "官方直连" : "二次中转";
 }
 
 function splitList(value: string) {

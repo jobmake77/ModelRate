@@ -1,7 +1,20 @@
 "use client";
 
 import Link from "next/link";
+import type { ReactNode } from "react";
 import { useEffect, useMemo, useState } from "react";
+import {
+  ArrowUpDown,
+  Brain,
+  Database,
+  Eye,
+  Globe2,
+  Search,
+  Sparkles,
+  Wrench,
+  X,
+} from "lucide-react";
+import { ProviderAvatar } from "@/components/public/provider-avatar";
 import { Badge } from "@/components/ui/badge";
 import { ModelWithPrice } from "@/lib/data-access/models";
 import { formatDate, formatNumber } from "@/lib/formatters/number";
@@ -14,6 +27,7 @@ import {
   formatCurrency,
   getModelRegion,
   groupModelsByProvider,
+  isPopularModel,
   type CurrencyCode,
   type ModelAudienceFilter,
 } from "@/lib/model-presentation";
@@ -137,83 +151,224 @@ export function ModelPriceTable({
   );
 
   return (
-    <div className="grid gap-4">
-      <div className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
-        <div className="grid gap-3 lg:grid-cols-[minmax(220px,1fr)_150px_140px_150px_130px_150px]">
-          <label className="grid gap-1 text-sm">
-            <span className="font-medium">搜索</span>
-            <input
-              className="rounded-md border border-slate-300 px-3 py-2"
-              placeholder="GPT, Claude, Gemini, Kimi..."
-              type="search"
-              value={query}
-              onChange={(event) => setQuery(event.target.value)}
-            />
-          </label>
-          <label className="grid gap-1 text-sm">
-            <span className="font-medium">厂商</span>
-            <select
-              className="rounded-md border border-slate-300 px-3 py-2"
-              value={provider}
-              onChange={(event) => setProvider(event.target.value)}
-            >
-              <option value="all">全部厂商</option>
-              {providers.map((providerName) => (
-                <option key={providerName} value={providerName}>
-                  {providerName}
-                </option>
+    <div className="grid gap-5">
+      <ModelFilterCommandBar
+        audience={audience}
+        capability={capability}
+        currency={currency}
+        filteredCount={filteredModels.length}
+        hasActiveFilters={hasActiveFilters}
+        modelsCount={models.length}
+        provider={provider}
+        providers={providers}
+        query={query}
+        sortKey={sortKey}
+        onAudienceChange={setAudience}
+        onCapabilityChange={setCapability}
+        onCurrencyChange={setCurrency}
+        onProviderChange={setProvider}
+        onQueryChange={setQuery}
+        onReset={() => {
+          setQuery("");
+          setProvider("all");
+          setAudience("all");
+          setCapability("all");
+          setCurrency("USD");
+          setSortKey("provider");
+        }}
+        onSortKeyChange={setSortKey}
+      />
+
+      <div className="grid gap-5">
+        {groupedModels.map((group) => (
+          <section
+            className="overflow-hidden rounded-2xl border bg-card shadow-soft"
+            key={group.providerName}
+          >
+            <div className="flex flex-wrap items-center justify-between gap-4 border-b border-border/70 bg-muted/60 px-5 py-4">
+              <div className="flex items-center gap-3">
+                <ProviderAvatar label={group.providerName} size="lg" />
+                <div>
+                  <h2 className="font-display text-lg font-semibold">
+                    {group.providerName}
+                  </h2>
+                  <p className="text-xs text-muted-foreground">
+                    {group.models.length} 个模型 · 国内{" "}
+                    {
+                      group.models.filter(
+                        (model) => getModelRegion(model) === "domestic",
+                      ).length
+                    }{" "}
+                    / 国外{" "}
+                    {
+                      group.models.filter(
+                        (model) => getModelRegion(model) === "international",
+                      ).length
+                    }
+                  </p>
+                </div>
+              </div>
+              <Badge tone="slate">
+                {group.models.filter(isPopularModel).length} popular
+              </Badge>
+            </div>
+            <div className="grid divide-y divide-border/70">
+              {group.models.map((model) => (
+                <ModelPriceRowCard
+                  currency={currency}
+                  exchangeRate={exchangeRate}
+                  key={model.slug}
+                  model={model}
+                />
               ))}
-            </select>
-          </label>
-          <label className="grid gap-1 text-sm">
-            <span className="font-medium">范围</span>
+            </div>
+          </section>
+        ))}
+      </div>
+
+      {!filteredModels.length ? (
+        <div className="rounded-xl border bg-card p-5 text-sm text-muted-foreground shadow-soft">
+          没有模型匹配当前筛选。
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
+function ModelFilterCommandBar({
+  audience,
+  capability,
+  currency,
+  filteredCount,
+  hasActiveFilters,
+  modelsCount,
+  onAudienceChange,
+  onCapabilityChange,
+  onCurrencyChange,
+  onProviderChange,
+  onQueryChange,
+  onReset,
+  onSortKeyChange,
+  provider,
+  providers,
+  query,
+  sortKey,
+}: {
+  audience: ModelAudienceFilter;
+  capability: CapabilityFilter;
+  currency: CurrencyCode;
+  filteredCount: number;
+  hasActiveFilters: boolean;
+  modelsCount: number;
+  onAudienceChange: (value: ModelAudienceFilter) => void;
+  onCapabilityChange: (value: CapabilityFilter) => void;
+  onCurrencyChange: (value: CurrencyCode) => void;
+  onProviderChange: (value: string) => void;
+  onQueryChange: (value: string) => void;
+  onReset: () => void;
+  onSortKeyChange: (value: SortKey) => void;
+  provider: string;
+  providers: string[];
+  query: string;
+  sortKey: SortKey;
+}) {
+  return (
+    <section className="rounded-2xl border bg-card p-4 shadow-soft">
+      <div className="flex flex-col gap-3 lg:flex-row lg:items-center">
+        <label className="relative min-w-0 flex-1">
+          <span className="sr-only">搜索</span>
+          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <input
+            aria-label="搜索"
+            className="h-11 w-full rounded-xl border border-input bg-background pl-9 pr-3 text-sm outline-none focus:ring-1 focus:ring-ring"
+            placeholder="搜索模型、厂商或模型 ID..."
+            type="search"
+            value={query}
+            onChange={(event) => onQueryChange(event.target.value)}
+          />
+        </label>
+
+        <SegmentedControl
+          items={[
+            ["all", "全部"],
+            ["popular", "热门"],
+            ["international", "国外"],
+            ["domestic", "国内"],
+          ]}
+          value={audience}
+          onChange={(value) => onAudienceChange(value as ModelAudienceFilter)}
+        />
+
+        <SegmentedControl
+          items={[
+            ["USD", "USD"],
+            ["CNY", "CNY"],
+          ]}
+          value={currency}
+          onChange={(value) => onCurrencyChange(value as CurrencyCode)}
+        />
+      </div>
+
+      <div className="mt-4 flex flex-wrap items-center gap-2">
+        <ChipButton
+          active={provider === "all"}
+          onClick={() => onProviderChange("all")}
+        >
+          全部厂商
+        </ChipButton>
+        {providers.map((providerName) => (
+          <ChipButton
+            active={provider === providerName}
+            key={providerName}
+            onClick={() => onProviderChange(providerName)}
+          >
+            {providerName}
+          </ChipButton>
+        ))}
+      </div>
+
+      <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
+        <div className="flex flex-wrap items-center gap-2">
+          <CapabilityFilterButton
+            active={capability === "all"}
+            icon={<Sparkles className="h-3.5 w-3.5" />}
+            label="全部能力"
+            onClick={() => onCapabilityChange("all")}
+          />
+          <CapabilityFilterButton
+            active={capability === "vision"}
+            icon={<Eye className="h-3.5 w-3.5" />}
+            label="视觉"
+            onClick={() => onCapabilityChange("vision")}
+          />
+          <CapabilityFilterButton
+            active={capability === "reasoning"}
+            icon={<Brain className="h-3.5 w-3.5" />}
+            label="推理"
+            onClick={() => onCapabilityChange("reasoning")}
+          />
+          <CapabilityFilterButton
+            active={capability === "tools"}
+            icon={<Wrench className="h-3.5 w-3.5" />}
+            label="工具调用"
+            onClick={() => onCapabilityChange("tools")}
+          />
+        </div>
+
+        <div className="flex flex-wrap items-center gap-2 text-sm">
+          <span className="text-muted-foreground">
+            {filteredCount} / {modelsCount}
+          </span>
+          <label className="inline-flex items-center gap-1 rounded-md border border-input bg-card px-2.5 py-1.5 text-sm">
+            <ArrowUpDown className="h-3.5 w-3.5 text-muted-foreground" />
+            <span className="sr-only">排序</span>
             <select
-              className="rounded-md border border-slate-300 px-3 py-2"
-              value={audience}
-              onChange={(event) =>
-                setAudience(event.target.value as ModelAudienceFilter)
-              }
-            >
-              <option value="all">全部</option>
-              <option value="popular">热门</option>
-              <option value="international">国外模型</option>
-              <option value="domestic">国内模型</option>
-            </select>
-          </label>
-          <label className="grid gap-1 text-sm">
-            <span className="font-medium">能力</span>
-            <select
-              className="rounded-md border border-slate-300 px-3 py-2"
-              value={capability}
-              onChange={(event) =>
-                setCapability(event.target.value as CapabilityFilter)
-              }
-            >
-              <option value="all">全部能力</option>
-              <option value="vision">视觉</option>
-              <option value="reasoning">推理</option>
-              <option value="tools">工具调用</option>
-            </select>
-          </label>
-          <label className="grid gap-1 text-sm">
-            <span className="font-medium">货币</span>
-            <select
-              className="rounded-md border border-slate-300 px-3 py-2"
-              value={currency}
-              onChange={(event) =>
-                setCurrency(event.target.value as CurrencyCode)
-              }
-            >
-              <option value="USD">USD</option>
-              <option value="CNY">CNY</option>
-            </select>
-          </label>
-          <label className="grid gap-1 text-sm">
-            <span className="font-medium">排序</span>
-            <select
-              className="rounded-md border border-slate-300 px-3 py-2"
+              aria-label="排序"
+              className="bg-transparent outline-none"
               value={sortKey}
-              onChange={(event) => setSortKey(event.target.value as SortKey)}
+              onChange={(event) =>
+                onSortKeyChange(event.target.value as SortKey)
+              }
             >
               <option value="provider">默认</option>
               <option value="input-price">输入价格</option>
@@ -221,146 +376,273 @@ export function ModelPriceTable({
               <option value="context">上下文</option>
             </select>
           </label>
-        </div>
-        <div className="mt-3 flex flex-wrap items-center justify-between gap-3 text-sm text-slate-500">
-          <span>
-            当前展示 {filteredModels.length} / {models.length} 个模型
-          </span>
           <button
-            className="rounded-md border border-slate-300 px-3 py-2 text-sm font-medium text-slate-700 disabled:cursor-not-allowed disabled:text-slate-400"
+            className="inline-flex items-center gap-1 rounded-md border border-input px-2.5 py-1.5 text-sm font-medium text-foreground/70 transition hover:bg-secondary disabled:hidden"
             disabled={!hasActiveFilters}
-            onClick={() => {
-              setQuery("");
-              setProvider("all");
-              setAudience("all");
-              setCapability("all");
-              setCurrency("USD");
-              setSortKey("provider");
-            }}
+            onClick={onReset}
             type="button"
           >
+            <X className="h-3.5 w-3.5" />
             重置筛选
           </button>
         </div>
       </div>
+    </section>
+  );
+}
 
-      <div className="grid gap-5">
-        {groupedModels.map((group) => (
-          <section
-            className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm"
-            key={group.providerName}
-          >
-            <div className="border-b border-slate-200 bg-slate-50 px-4 py-3">
-              <h2 className="font-semibold text-slate-950">
-                {group.providerName}
-              </h2>
-            </div>
-            <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-slate-200 text-sm">
-                <thead className="bg-white text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
-                  <tr>
-                    <th className="px-4 py-3">模型</th>
-                    <th className="px-4 py-3">区域</th>
-                    <th className="px-4 py-3">输入 / 1M</th>
-                    <th className="px-4 py-3">输出 / 1M</th>
-                    <th className="px-4 py-3">上下文</th>
-                    <th className="px-4 py-3">能力</th>
-                    <th className="px-4 py-3">来源</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-100">
-                  {group.models.map((model) => (
-                    <tr
-                      key={model.slug}
-                      className="align-top hover:bg-slate-50"
-                    >
-                      <td className="px-4 py-4">
-                        <Link
-                          className="font-medium text-slate-950 hover:underline"
-                          href={`/models/${model.slug}`}
-                        >
-                          {model.displayName}
-                        </Link>
-                        <div className="mt-1 text-xs text-slate-500">
-                          {model.canonicalModelId}
-                        </div>
-                      </td>
-                      <td className="px-4 py-4">
-                        {getModelRegion(model) === "domestic" ? "国内" : "国外"}
-                      </td>
-                      <td className="px-4 py-4 font-medium">
-                        {model.currentPrice
-                          ? formatCurrency(
-                              model.currentPrice.inputPricePer1M,
-                              currency,
-                              exchangeRate,
-                            )
-                          : "N/A"}
-                      </td>
-                      <td className="px-4 py-4 font-medium">
-                        {model.currentPrice
-                          ? formatCurrency(
-                              model.currentPrice.outputPricePer1M,
-                              currency,
-                              exchangeRate,
-                            )
-                          : "N/A"}
-                      </td>
-                      <td className="px-4 py-4">
-                        {formatNumber(model.contextWindow)}
-                      </td>
-                      <td className="px-4 py-4">
-                        <div className="flex flex-wrap gap-1">
-                          {model.supportsVision ? (
-                            <Badge tone="blue">视觉</Badge>
-                          ) : null}
-                          {model.supportsReasoning ? (
-                            <Badge tone="amber">推理</Badge>
-                          ) : null}
-                          {model.supportsFunctionCalling ? (
-                            <Badge tone="green">工具</Badge>
-                          ) : null}
-                        </div>
-                      </td>
-                      <td className="px-4 py-4">
-                        {model.currentPrice ? (
-                          <div>
-                            <a
-                              className="font-medium text-blue-700 hover:underline"
-                              href={model.currentPrice.sourceUrl}
-                              rel="noreferrer"
-                              target="_blank"
-                            >
-                              {formatPriceSourceName(model.currentPrice)}
-                            </a>
-                            {getPriceSourceNotice(model.currentPrice) ? (
-                              <div className="mt-1 text-xs text-amber-700">
-                                {getPriceSourceNotice(model.currentPrice)}
-                              </div>
-                            ) : null}
-                            <div className="mt-1 text-xs text-slate-500">
-                              Checked{" "}
-                              {formatDate(model.currentPrice.lastCheckedAt)}
-                            </div>
-                          </div>
-                        ) : (
-                          <span className="text-slate-500">暂无当前价格</span>
-                        )}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </section>
-        ))}
+function ModelPriceRowCard({
+  currency,
+  exchangeRate,
+  model,
+}: {
+  currency: CurrencyCode;
+  exchangeRate: number;
+  model: ModelWithPrice;
+}) {
+  const currentPrice = model.currentPrice;
+
+  return (
+    <article className="grid gap-4 px-5 py-4 transition hover:bg-accent/35 xl:grid-cols-[minmax(260px,1fr)_minmax(420px,1.2fr)_minmax(190px,0.7fr)]">
+      <div className="flex gap-3">
+        <ProviderAvatar label={model.provider.name} />
+        <div className="min-w-0">
+          <div className="flex flex-wrap items-center gap-2">
+            <Link
+              className="font-display text-base font-semibold hover:text-primary"
+              href={`/models/${model.slug}`}
+            >
+              {model.displayName}
+            </Link>
+            {isPopularModel(model) ? (
+              <CapabilityPill
+                icon={<Sparkles className="h-3.5 w-3.5" />}
+                label="热门"
+              />
+            ) : null}
+          </div>
+          <p className="mt-1 break-all font-mono text-xs text-muted-foreground">
+            {model.canonicalModelId}
+          </p>
+          <div className="mt-3 flex flex-wrap gap-1.5">
+            <CapabilityPill
+              icon={<Globe2 className="h-3.5 w-3.5" />}
+              label={getModelRegion(model) === "domestic" ? "国内" : "国外"}
+            />
+            {model.supportsVision ? (
+              <CapabilityPill
+                icon={<Eye className="h-3.5 w-3.5" />}
+                label="视觉"
+              />
+            ) : null}
+            {model.supportsReasoning ? (
+              <CapabilityPill
+                icon={<Brain className="h-3.5 w-3.5" />}
+                label="推理"
+              />
+            ) : null}
+            {model.supportsFunctionCalling ? (
+              <CapabilityPill
+                icon={<Wrench className="h-3.5 w-3.5" />}
+                label="工具"
+              />
+            ) : null}
+          </div>
+        </div>
       </div>
 
-      {!filteredModels.length ? (
-        <div className="rounded-lg border border-slate-200 bg-white p-5 text-sm text-slate-500">
-          没有模型匹配当前筛选。
-        </div>
-      ) : null}
+      <div className="grid gap-3 sm:grid-cols-3">
+        <MetricTile
+          label="输入 / 1M"
+          tone="secondary"
+          value={
+            currentPrice
+              ? formatCurrency(
+                  currentPrice.inputPricePer1M,
+                  currency,
+                  exchangeRate,
+                )
+              : "N/A"
+          }
+        />
+        <MetricTile
+          label="输出 / 1M"
+          tone="primary"
+          value={
+            currentPrice
+              ? formatCurrency(
+                  currentPrice.outputPricePer1M,
+                  currency,
+                  exchangeRate,
+                )
+              : "N/A"
+          }
+        />
+        <MetricTile
+          icon={<Database className="h-3.5 w-3.5" />}
+          label="上下文"
+          tone="muted"
+          value={formatNumber(model.contextWindow)}
+        />
+      </div>
+
+      <div className="rounded-xl border border-dashed border-border/80 bg-background/60 p-3 text-xs">
+        {currentPrice ? (
+          <>
+            <div className="flex items-start justify-between gap-3">
+              <span className="text-muted-foreground">数据来源</span>
+              <a
+                className="text-right font-medium text-primary hover:underline"
+                href={currentPrice.sourceUrl}
+                rel="noreferrer"
+                target="_blank"
+              >
+                {formatPriceSourceName(currentPrice)}
+              </a>
+            </div>
+            <div className="mt-2 flex items-center justify-between gap-3 text-muted-foreground">
+              <span>Last checked</span>
+              <span className="font-mono">
+                {formatDate(currentPrice.lastCheckedAt)}
+              </span>
+            </div>
+            {getPriceSourceNotice(currentPrice) ? (
+              <p className="mt-2 leading-5 text-amber-700">
+                {getPriceSourceNotice(currentPrice)}
+              </p>
+            ) : null}
+          </>
+        ) : (
+          <span className="text-muted-foreground">暂无当前价格</span>
+        )}
+      </div>
+    </article>
+  );
+}
+
+function MetricTile({
+  icon,
+  label,
+  tone,
+  value,
+}: {
+  icon?: React.ReactNode;
+  label: string;
+  tone: "muted" | "primary" | "secondary";
+  value: string;
+}) {
+  const toneClass =
+    tone === "primary"
+      ? "border-primary/25 bg-primary/5 text-primary"
+      : tone === "secondary"
+        ? "bg-card"
+        : "bg-secondary/40";
+
+  return (
+    <div className={`rounded-xl border p-3 ${toneClass}`}>
+      <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+        {icon}
+        {label}
+      </div>
+      <div
+        className={`mt-2 font-mono font-semibold tabular-nums ${
+          tone === "primary" ? "text-2xl" : "text-xl text-foreground"
+        }`}
+      >
+        {value}
+      </div>
+    </div>
+  );
+}
+
+function CapabilityPill({ icon, label }: { icon: ReactNode; label: string }) {
+  return (
+    <span className="inline-flex items-center gap-1 rounded-full border border-border bg-secondary/60 px-2 py-1 text-xs font-medium text-foreground/75">
+      {icon}
+      {label}
+    </span>
+  );
+}
+
+function CapabilityFilterButton({
+  active,
+  icon,
+  label,
+  onClick,
+}: {
+  active: boolean;
+  icon: ReactNode;
+  label: string;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-sm font-medium transition ${
+        active
+          ? "border-primary bg-primary/10 text-primary"
+          : "border-border bg-card text-foreground/70 hover:bg-secondary"
+      }`}
+      aria-pressed={active}
+      onClick={onClick}
+      type="button"
+    >
+      {icon}
+      {label}
+    </button>
+  );
+}
+
+function ChipButton({
+  active,
+  children,
+  onClick,
+}: {
+  active: boolean;
+  children: ReactNode;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      className={`rounded-full border px-3 py-1.5 text-sm font-medium transition ${
+        active
+          ? "border-primary bg-primary text-primary-foreground"
+          : "border-border bg-card text-foreground/70 hover:bg-secondary"
+      }`}
+      aria-pressed={active}
+      onClick={onClick}
+      type="button"
+    >
+      {children}
+    </button>
+  );
+}
+
+function SegmentedControl({
+  items,
+  onChange,
+  value,
+}: {
+  items: Array<[string, string]>;
+  onChange: (value: string) => void;
+  value: string;
+}) {
+  return (
+    <div className="inline-flex w-fit overflow-hidden rounded-xl border border-input bg-secondary/40 p-1">
+      {items.map(([itemValue, label]) => (
+        <button
+          className={`rounded-lg px-3 py-1.5 text-sm font-medium transition ${
+            value === itemValue
+              ? "bg-foreground text-background shadow-sm"
+              : "text-foreground/70 hover:bg-card"
+          }`}
+          aria-pressed={value === itemValue}
+          key={itemValue}
+          onClick={() => onChange(itemValue)}
+          type="button"
+        >
+          {label}
+        </button>
+      ))}
     </div>
   );
 }

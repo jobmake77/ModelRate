@@ -10,10 +10,10 @@ export async function AdSlot({ slotKey }: { slotKey: string }) {
   return (
     <aside
       aria-label="Advertisement"
-      className="rounded-lg border border-slate-200 bg-white p-4 text-sm text-slate-500 shadow-sm"
+      className="rounded-xl border border-border bg-card p-4 text-sm text-muted-foreground shadow-soft"
       data-ad-slot={placement.slotKey}
     >
-      <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-400">
+      <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground/80">
         Advertisement
       </div>
       <div>{placement.adCode}</div>
